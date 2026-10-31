@@ -45,13 +45,21 @@ st.markdown("""
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         border: 4px solid #facc15;
         border-radius: 20px;
-        padding: 30px;
+        padding: 25px;
         text-align: center;
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: bold;
         color: #ffffff !important;
         box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-        margin-bottom: 25px;
+        margin-bottom: 20px;
+    }
+    .impostor-box {
+        background-color: #ffffff;
+        color: #000000;
+        border: 3px solid #ef4444;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
     }
     .stButton>button, .stFormSubmitButton>button {
         background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%) !important;
@@ -140,6 +148,8 @@ if "ingelogd" not in st.session_state:
     st.session_state.ingelogd = False
 if "speler_naam" not in st.session_state:
     st.session_state.speler_naam = ""
+if "modus" not in st.session_state:
+    st.session_state.modus = "normaal"
 
 # ---------------- ADMIN SIDEBAR ----------------
 st.sidebar.title("👑 Gym Leader Admin")
@@ -228,60 +238,110 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # Voortgangsbalk naar volgend level
-    if huidige_lvl['level'] < 5:
-        xp_in_dit_level = st.session_state.xp - huidige_lvl['xp_nodig']
-        xp_nodig_in_dit_level = volgende_lvl['xp_nodig'] - huidige_lvl['xp_nodig']
-        voortgang = min(max(xp_in_dit_level / xp_nodig_in_dit_level, 0.0), 1.0)
-        st.write(f"**Evolutie-Voortgang naar Level {volgende_lvl['level']} ({volgende_lvl['naam']}):**")
-        st.progress(voortgang)
-        st.caption(f"Nog {volgende_lvl['xp_nodig'] - st.session_state.xp} XP nodig voor de volgende Evolutie!")
-    else:
-        st.success("🎉 Je bent de absolute Pokémon Champion van de Reken-Gym!")
+    # Schakelen tussen Normale Modus en Impostor-Puzzel
+    col_m1, col_m2 = st.columns(2)
+    with col_m1:
+        if st.button("⚔️ Normale Battle", use_container_width=True):
+            st.session_state.modus = "normaal"
+            st.rerun()
+    with col_m2:
+        if st.button("🕵️ Ontmasker de Impostor!", use_container_width=True):
+            st.session_state.modus = "impostor"
+            st.rerun()
 
     st.divider()
 
-    # Genereer automatisch een gemengde som
-    if st.session_state.huidige_som is None:
-        st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
+    # ---------------- MODUS 1: NORMAAL REKENEN ----------------
+    if st.session_state.modus == "normaal":
+        # Genereer automatisch een gemengde som
+        if st.session_state.huidige_som is None:
+            st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
 
-    som_tekst, juist_ans = st.session_state.huidige_som
-    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
+        som_tekst, juist_ans = st.session_state.huidige_som
+        st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
-    # FORMULIER WAARMEE ENTER DIRECT WERKT
-    with st.form(key=f"reken_form_{st.session_state.xp}", clear_on_submit=True):
-        ans_invoer = st.number_input("Typ je antwoord (en druk op Enter):", step=1, value=None)
-        submitted = st.form_submit_button("💥 GEBRUIK REKEN-AANVAL! ⚡")
+        with st.form(key=f"reken_form_{st.session_state.xp}", clear_on_submit=True):
+            ans_invoer = st.number_input("Typ je antwoord (en druk op Enter):", step=1, value=None)
+            submitted = st.form_submit_button("💥 GEBRUIK REKEN-AANVAL! ⚡")
 
-        if submitted:
-            if ans_invoer is not None:
-                oude_lvl = huidige_lvl['level']
-                
-                if ans_invoer == juist_ans:
-                    st.session_state.xp += 1  # 1 XP per goed antwoord!
-                    st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
+            if submitted:
+                if ans_invoer is not None:
+                    oude_lvl = huidige_lvl['level']
                     
-                    # Direct opslaan in Supabase database
-                    try:
-                        supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
-                    except Exception:
-                        pass
+                    if ans_invoer == juist_ans:
+                        st.session_state.xp += 1  # 1 XP per goed antwoord!
+                        st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
+                        
+                        try:
+                            supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
+                        except Exception:
+                            pass
 
-                    # Check voor Level Up / Evolutie!
-                    nieuwe_lvl, _ = bereken_level_info(st.session_state.xp)
-                    if nieuwe_lvl['level'] > oude_lvl:
-                        st.balloons()
-                        st.snow()
-                        st.toast(f"🎉 EVOLUTIE! Je bent geëvolueerd naar Level {nieuwe_lvl['level']} ({nieuwe_lvl['naam']})!", icon="🔴")
-                else:
-                    st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
+                        nieuwe_lvl, _ = bereken_level_info(st.session_state.xp)
+                        if nieuwe_lvl['level'] > oude_lvl:
+                            st.balloons()
+                            st.snow()
+                            st.toast(f"🎉 EVOLUTIE! Je bent geëvolueerd naar Level {nieuwe_lvl['level']} ({nieuwe_lvl['naam']})!", icon="🔴")
+                    else:
+                        st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
 
-                st.session_state.huidige_som = None
-                st.rerun()
+                    st.session_state.huidige_som = None
+                    st.rerun()
 
+    # ---------------- MODUS 2: IMPOSTOR PUZZEL (PICO-CODE) ----------------
+    else:
+        st.subheader("🕵️ ONTMASKER DE IMPOSTOR!")
+        st.write("Bereken de waarden van de Pokémon en vind het antwoord dat de **IMPOSTOR** is!")
+
+        # Vaste getallen per Pokémon
+        pika = 12
+        chari = 25
+        blast = 8
+        mew = 50
+
+        st.markdown("""
+        <div class="impostor-box">
+            <h4>📜 Pokémon Waarden Kaart:</h4>
+            <b>⚡ Pikachu</b> = 12 &nbsp;&nbsp;|&nbsp;&nbsp; 
+            <b>🔥 Charizard</b> = 25 &nbsp;&nbsp;|&nbsp;&nbsp; 
+            <b>🌊 Blastoise</b> = 8 &nbsp;&nbsp;|&nbsp;&nbsp; 
+            <b>🔮 Mewtwo</b> = 50
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.write("### ❓ Los de Puzzels op:")
+        
+        # Puzzel 1: Pikachu + Charizard
+        ans1 = st.number_input("1) ⚡ Pikachu + 🔥 Charizard = ?", step=1, key="imp_1")
+        # Puzzel 2: Mewtwo - Blastoise
+        ans2 = st.number_input("2) 🔮 Mewtwo - 🌊 Blastoise = ?", step=1, key="imp_2")
+        # Puzzel 3: Charizard × Blastoise
+        ans3 = st.number_input("3) 🔥 Charizard × 🌊 Blastoise = ?", step=1, key="imp_3")
+
+        st.write("---")
+        impostor_keuze = st.number_input("🚨 Welke van de bovenstaande uitkomsten is gelijk aan 42? (De Impostor)", step=1, key="imp_ans")
+
+        if st.button("🔥 CONTROLEER IMPOSTOR PUZZEL", use_container_width=True):
+            corr1 = pika + chari  # 37
+            corr2 = mew - blast   # 42  <-- Impostor!
+            corr3 = chari * blast # 200
+
+            if ans1 == corr1 and ans2 == corr2 and ans3 == corr3 and impostor_keuze == 42:
+                st.balloons()
+                st.session_state.xp += 5
+                try:
+                    supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
+                except Exception:
+                    pass
+                st.success("🎉 GEWELDIG! Je hebt alle rekenpuzzels én de Impostor ontmaskerd! **+5 BONUS XP!** 🔴")
+            else:
+                st.error("❌ Oeps! Niet alle antwoorden waren juist. Kijk goed naar de Pokémon-waarden en reken opnieuw uit!")
+
+    st.divider()
     if st.button("🚪 Uitloggen & Voortgang Bewaren"):
         st.session_state.ingelogd = False
         st.session_state.huidige_som = None
+        st.session_state.modus = "normaal"
         st.rerun()
 
 # ---------------- ADMIN DASHBOARD ----------------
@@ -294,7 +354,7 @@ if st.session_state.is_admin:
             st.dataframe(res.data, use_container_width=True)
             if st.button("🗑️ Wis Alle Spelers & Voortgang"):
                 supabase.table("players").delete().neq("id", 0).execute()
-                st.success("Alle spelers gewist!")
+                st.success("Alle scores gewist!")
                 st.rerun()
         else:
             st.info("Nog geen geregistreerde spelers in de database.")
