@@ -1,6 +1,5 @@
 import streamlit as st
 import random
-import streamlit.components.v1 as components
 from supabase import create_client
 
 # -------------------------------------------------------------
@@ -164,6 +163,8 @@ if "xp" not in st.session_state:
     st.session_state.xp = 0
 if "sommen_teller" not in st.session_state:
     st.session_state.sommen_teller = 0
+if "vraag_id" not in st.session_state:
+    st.session_state.vraag_id = 0
 if "huidige_som" not in st.session_state:
     st.session_state.huidige_som = None
 if "huidige_impostor" not in st.session_state:
@@ -273,22 +274,6 @@ else:
 
     st.divider()
 
-    # JavaScript voor automatische focus op het getallenveld
-    components.html(
-        """
-        <script>
-        const doc = window.parent.document;
-        setTimeout(() => {
-            const inputs = doc.querySelectorAll('input[type="number"]');
-            if (inputs.length > 0) {
-                inputs[0].focus();
-            }
-        }, 100);
-        </script>
-        """,
-        height=0,
-    )
-
     # ---------------- NA ELKE 10 SOMMEN: VERPLICHTE VISUELE IMPOSTOR PUZZEL ----------------
     if st.session_state.sommen_teller >= 10:
         st.subheader("🕵️ VERPLICHTE CHALLENGE: ONTMASKER DE IMPOSTOR!")
@@ -313,7 +298,7 @@ else:
 
         st.divider()
 
-        with st.form(key=f"imp_form_{st.session_state.xp}", clear_on_submit=True):
+        with st.form(key=f"imp_form_{st.session_state.vraag_id}", clear_on_submit=True):
             a1 = st.number_input(f"1) Pikachu ({pika}) + Charizard ({chari}) = ?", step=1)
             a2 = st.number_input(f"2) Charizard ({chari}) × Blastoise ({blast}) = ?", step=1)
             a3 = st.number_input(f"3) (Charizard + Pikachu) - Blastoise = ?", step=1)
@@ -325,6 +310,7 @@ else:
                     st.session_state.xp += 2
                     st.session_state.sommen_teller = 0
                     st.session_state.huidige_impostor = None
+                    st.session_state.vraag_id += 1
                     
                     try:
                         supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
@@ -347,8 +333,14 @@ else:
         som_tekst, juist_ans = st.session_state.huidige_som
         st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
-        with st.form(key=f"reken_form_{st.session_state.xp}", clear_on_submit=True):
-            ans_invoer = st.number_input("Typ je antwoord (en druk op Enter):", step=1, value=None)
+        # HET GEHEIM VOOR DIRECTE FOCUS: EEN UNIEKE KEY PER VRAAG
+        with st.form(key=f"reken_form_{st.session_state.vraag_id}", clear_on_submit=True):
+            ans_invoer = st.number_input(
+                "Typ je antwoord (en druk op Enter):", 
+                step=1, 
+                value=None, 
+                key=f"input_box_{st.session_state.vraag_id}"
+            )
             submitted = st.form_submit_button("💥 GEBRUIK REKEN-AANVAL! ⚡")
 
             if submitted:
@@ -373,6 +365,8 @@ else:
                     else:
                         st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
 
+                    # Verhoog de vraag_id zodat Streamlit het volgende invoerveld direct focust
+                    st.session_state.vraag_id += 1
                     st.session_state.huidige_som = None
                     st.rerun()
 
