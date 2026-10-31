@@ -1,5 +1,6 @@
 import streamlit as st
 import random
+import streamlit.components.v1 as components
 from supabase import create_client
 
 # -------------------------------------------------------------
@@ -155,7 +156,7 @@ def genereer_impostor_puzzel(level):
     ans2 = chari * blast
     ans3 = (chari + pika) - blast
     
-    impostor = ans2  # De vermenigvuldiging is de Impostor
+    impostor = ans2
     return pika, chari, blast, ans1, ans2, ans3, impostor
 
 # Sessie variabelen
@@ -272,6 +273,20 @@ else:
 
     st.divider()
 
+    # JavaScript script voor automatische focus op het getalleninvoerveld
+    components.html(
+        """
+        <script>
+        const doc = window.parent.document;
+        const inputs = doc.querySelectorAll('input[type="number"]');
+        if (inputs.length > 0) {
+            inputs[0].focus();
+        }
+        </script>
+        """,
+        height=0,
+    )
+
     # ---------------- NA ELKE 10 SOMMEN: VERPLICHTE VISUELE IMPOSTOR PUZZEL ----------------
     if st.session_state.sommen_teller >= 10:
         st.subheader("🕵️ VERPLICHTE CHALLENGE: ONTMASKER DE IMPOSTOR!")
@@ -282,7 +297,6 @@ else:
 
         pika, chari, blast, c1, c2, c3, imp_juist = st.session_state.huidige_impostor
 
-        # Visuele Legende met echte Afbeeldingen
         st.markdown("### 📜 Pokémon Waarden Kaart:")
         col_p1, col_p2, col_p3 = st.columns(3)
         with col_p1:
@@ -306,8 +320,8 @@ else:
             if st.form_submit_button("🔥 ONTMASKER EN GA DOOR!"):
                 if a1 == c1 and a2 == c2 and a3 == c3 and imp_gekozen == imp_juist:
                     st.balloons()
-                    st.session_state.xp += 2  # 2 XP bonus
-                    st.session_state.sommen_teller = 0  # Reset teller
+                    st.session_state.xp += 2
+                    st.session_state.sommen_teller = 0
                     st.session_state.huidige_impostor = None
                     
                     try:
@@ -329,7 +343,7 @@ else:
             st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
 
         som_tekst, juist_ans = st.session_state.huidige_som
-        st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allowed_html=True)
 
         with st.form(key=f"reken_form_{st.session_state.xp}", clear_on_submit=True):
             ans_invoer = st.number_input("Typ je antwoord (en druk op Enter):", step=1, value=None)
@@ -340,7 +354,7 @@ else:
                     oude_lvl = huidige_lvl['level']
                     
                     if ans_invoer == juist_ans:
-                        st.session_state.xp += 1  # 1 XP per goed antwoord
+                        st.session_state.xp += 1
                         st.session_state.sommen_teller += 1
                         st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
                         
