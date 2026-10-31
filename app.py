@@ -126,8 +126,9 @@ def bereken_level_info(totale_xp):
         volgende_lvl = LEVELS[-1]
     return huidige_lvl, volgende_lvl
 
+# INCLUSIEF TIENTALLEN EN HONDERDTALLEN (X10, X100, :10, :100)
 def genereer_gemengde_som(level):
-    keuze = random.choice(["maal", "deel", "plusmin", "breuk"])
+    keuze = random.choice(["maal", "deel", "plusmin", "breuk", "tientallen"])
     
     if keuze == "maal":
         n1 = random.randint(2, 9) if level == 1 else random.randint(3, 10) if level == 2 else random.randint(6, 12)
@@ -149,7 +150,7 @@ def genereer_gemengde_som(level):
         hint = f"💡 Welk getal × {n2} is gelijk aan {ans * n2}?"
         return f"{ans * n2} ÷ {n2}", ans, "deel", hint
 
-    else:
+    elif keuze == "breuk":
         opties = [("1/2", 2), ("1/4", 4), ("3/4", 4), ("1/3", 3), ("2/3", 3)]
         breuk_tekst, noemer = random.choice(opties)
         factor = random.randint(2, 8)
@@ -163,6 +164,22 @@ def genereer_gemengde_som(level):
 
         hint = f"💡 Verdeel {totaal_getal} eerst in {noemer} gelijke delen (elk deel is {totaal_getal // noemer})"
         return f"{breuk_tekst} van {totaal_getal}", ans, "breuk", hint
+
+    else: # TIENTALLEN EN HONDERDTALLEN (x10, x100, :10, :100)
+        sub_type = random.choice(["maal10", "maal100", "deel10", "deel100"])
+        
+        if sub_type == "maal10":
+            n1 = random.randint(3, 45)
+            return f"{n1} × 10", n1 * 10, "tientallen", "💡 Vermenigvuldigen met 10? Plak er een 0 achteraan!"
+        elif sub_type == "maal100":
+            n1 = random.randint(2, 9)
+            return f"{n1} × 100", n1 * 100, "tientallen", "💡 Vermenigvuldigen met 100? Plak er twee nullen achteraan!"
+        elif sub_type == "deel10":
+            ans = random.randint(3, 50)
+            return f"{ans * 10} ÷ 10", ans, "tientallen", "💡 Delen door 10? Haal er één 0 vanaf!"
+        else: # deel100
+            ans = random.randint(2, 9)
+            return f"{ans * 100} ÷ 100", ans, "tientallen", "💡 Delen door 100? Haal er twee nullen vanaf!"
 
 def genereer_impostor_puzzel(level):
     pika = random.randint(4, 10)
@@ -183,7 +200,7 @@ if "huidige_impostor" not in st.session_state: st.session_state.huidige_impostor
 if "ingelogd" not in st.session_state: st.session_state.ingelogd = False
 if "speler_naam" not in st.session_state: st.session_state.speler_naam = ""
 if "is_admin" not in st.session_state: st.session_state.is_admin = False
-if "fouten_per_type" not in st.session_state: st.session_state.fouten_per_type = {"maal": 0, "deel": 0, "plusmin": 0, "breuk": 0}
+if "fouten_per_type" not in st.session_state: st.session_state.fouten_per_type = {"maal": 0, "deel": 0, "plusmin": 0, "breuk": 0, "tientallen": 0}
 if "toon_hint" not in st.session_state: st.session_state.toon_hint = False
 
 # ---------------- ADMIN SIDEBAR ----------------
@@ -243,7 +260,6 @@ if not st.session_state.ingelogd:
 else:
     huidige_lvl, volgende_lvl = bereken_level_info(st.session_state.xp)
 
-    # TABBLADEN VOOR SPEL EN LEADERBOARD
     tab_game, tab_board = st.tabs(["⚔️ Reken Battle", "🏆 Highscores"])
 
     with tab_game:
@@ -307,7 +323,6 @@ else:
             som_tekst, juist_ans, s_type, hint_txt = st.session_state.huidige_som
             st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
-            # HINT FUNCTIE
             if st.session_state.toon_hint:
                 st.markdown(f'<div class="hint-box">{hint_txt}</div>', unsafe_allow_html=True)
             else:
@@ -327,7 +342,7 @@ else:
                         st.toast("⚡ AANVAL GESLAAGD! +1 XP! 🔴", icon="⭐")
                     else:
                         st.session_state.fouten = (st.session_state.fouten or 0) + 1
-                        st.session_state.fouten_per_type[s_type] += 1
+                        st.session_state.fouten_per_type[s_type] = st.session_state.fouten_per_type.get(s_type, 0) + 1
                         supabase.table("players").update({"fouten": st.session_state.fouten}).eq("naam", st.session_state.speler_naam).execute()
                         st.toast(f"❌ GEMIST! Het antwoord was {juist_ans}.", icon="💡")
 
@@ -337,7 +352,6 @@ else:
                 except ValueError:
                     st.toast("⚠️ Typ een geldig getal!", icon="⚠️")
 
-    # HIGHSCORE LEADERBOARD
     with tab_board:
         st.subheader("🏆 Reken-Gym Ranglijst (Top Trainers)")
         try:
@@ -356,7 +370,7 @@ else:
         st.session_state.sommen_teller = 0
         st.rerun()
 
-# ---------------- ADMIN STATISTIEKEN DASHBOARD ----------------
+# ---------------- ADMIN DASHBOARD ----------------
 if st.session_state.is_admin:
     st.divider()
     st.subheader("📊 Gym Leader Admin Dashboard")
