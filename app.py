@@ -300,28 +300,32 @@ else:
         st.divider()
 
         with st.form(key=f"imp_form_{st.session_state.vraag_id}", clear_on_submit=True):
-            a1 = st.number_input(f"1) Pikachu ({pika}) + Charizard ({chari}) = ?", step=1)
-            a2 = st.number_input(f"2) Charizard ({chari}) × Blastoise ({blast}) = ?", step=1)
-            a3 = st.number_input(f"3) (Charizard + Pikachu) - Blastoise = ?", step=1)
-            imp_gekozen = st.number_input("🚨 Welke uitkomst is de GROOTSTE (De Impostor)?", step=1)
+            a1_str = st.text_input(f"1) Pikachu ({pika}) + Charizard ({chari}) = ?")
+            a2_str = st.text_input(f"2) Charizard ({chari}) × Blastoise ({blast}) = ?")
+            a3_str = st.text_input(f"3) (Charizard + Pikachu) - Blastoise = ?")
+            imp_gekozen_str = st.text_input("🚨 Welke uitkomst is de GROOTSTE (De Impostor)?")
 
             if st.form_submit_button("🔥 ONTMASKER EN GA DOOR!"):
-                if a1 == c1 and a2 == c2 and a3 == c3 and imp_gekozen == imp_juist:
-                    st.balloons()
-                    st.session_state.xp += 2
-                    st.session_state.sommen_teller = 0
-                    st.session_state.huidige_impostor = None
-                    st.session_state.vraag_id += 1
-                    
-                    try:
-                        supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
-                    except Exception:
-                        pass
+                try:
+                    a1, a2, a3, imp_gekozen = int(a1_str), int(a2_str), int(a3_str), int(imp_gekozen_str)
+                    if a1 == c1 and a2 == c2 and a3 == c3 and imp_gekozen == imp_juist:
+                        st.balloons()
+                        st.session_state.xp += 2
+                        st.session_state.sommen_teller = 0
+                        st.session_state.huidige_impostor = None
+                        st.session_state.vraag_id += 1
+                        
+                        try:
+                            supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
+                        except Exception:
+                            pass
 
-                    st.toast("🎉 GEWELDIG! Puzzel opgelost! +2 XP verdiend! 🔴", icon="⭐")
-                    st.rerun()
-                else:
-                    st.toast("❌ Niet alle antwoorden kloppen nog! Reken goed na.", icon="💡")
+                        st.toast("🎉 GEWELDIG! Puzzel opgelost! +2 XP verdiend! 🔴", icon="⭐")
+                        st.rerun()
+                    else:
+                        st.toast("❌ Niet alle antwoorden kloppen nog! Reken goed na.", icon="💡")
+                except ValueError:
+                    st.toast("⚠️ Typ getallen in alle vakjes!", icon="⚠️")
 
     # ---------------- REGULIERE GEMENGDE SOMMEN (10 STUKS) ----------------
     else:
@@ -335,53 +339,59 @@ else:
         st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
         with st.form(key=f"reken_form_{st.session_state.vraag_id}", clear_on_submit=True):
-            ans_invoer = st.number_input(
+            ans_invoer_str = st.text_input(
                 "Typ je antwoord (en druk op Enter):", 
-                step=1, 
-                value=None, 
                 key=f"input_box_{st.session_state.vraag_id}"
             )
             submitted = st.form_submit_button("💥 GEBRUIK REKEN-AANVAL! ⚡")
 
             if submitted:
-                if ans_invoer is not None:
-                    oude_lvl = huidige_lvl['level']
-                    
-                    if ans_invoer == juist_ans:
-                        st.session_state.xp += 1
-                        st.session_state.sommen_teller += 1
-                        st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
+                if ans_invoer_str.strip() != "":
+                    try:
+                        ans_invoer = int(ans_invoer_str.strip())
+                        oude_lvl = huidige_lvl['level']
                         
-                        try:
-                            supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
-                        except Exception:
-                            pass
+                        if ans_invoer == juist_ans:
+                            st.session_state.xp += 1
+                            st.session_state.sommen_teller += 1
+                            st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
+                            
+                            try:
+                                supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
+                            except Exception:
+                                pass
 
-                        nieuwe_lvl, _ = bereken_level_info(st.session_state.xp)
-                        if nieuwe_lvl['level'] > oude_lvl:
-                            st.balloons()
-                            st.snow()
-                            st.toast(f"🎉 EVOLUTIE! Je bent geëvolueerd naar Level {nieuwe_lvl['level']} ({nieuwe_lvl['naam']})!", icon="🔴")
-                    else:
-                        st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
+                            nieuwe_lvl, _ = bereken_level_info(st.session_state.xp)
+                            if nieuwe_lvl['level'] > oude_lvl:
+                                st.balloons()
+                                st.snow()
+                                st.toast(f"🎉 EVOLUTIE! Je bent geëvolueerd naar Level {nieuwe_lvl['level']} ({nieuwe_lvl['naam']})!", icon="🔴")
+                        else:
+                            st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
 
-                    st.session_state.vraag_id += 1
-                    st.session_state.huidige_som = None
-                    st.rerun()
+                        st.session_state.vraag_id += 1
+                        st.session_state.huidige_som = None
+                        st.rerun()
+                    except ValueError:
+                        st.toast("⚠️ Typ een geldig getal in!", icon="⚠️")
 
-    # DYNAMISCH SCRIPT VOOR AUTO-SCROLL EN AUTO-FOCUS NAAR HET INVOERVELD
+    # DIRECTE FOCUS OP HET ECHTE INPUT ELEMENT IN DE BROWSER
     components.html(
         f"""
         <script>
         const doc = window.parent.document;
-        setTimeout(() => {{
-            const inputField = doc.querySelector('input[data-testid="stNumberInputInput"]');
-            if (inputField) {{
-                inputField.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-                inputField.focus();
-                inputField.click();
+        function setFocus() {{
+            const inputs = doc.querySelectorAll('input[type="text"]');
+            for (let input of inputs) {{
+                if (input.placeholder !== "Wat is je Trainer Naam?" && !input.readOnly) {{
+                    input.focus();
+                    input.select();
+                    break;
+                }}
             }}
-        }}, 300);
+        }}
+        setTimeout(setFocus, 150);
+        setTimeout(setFocus, 400);
         </script>
         """,
         height=0,
