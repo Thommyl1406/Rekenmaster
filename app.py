@@ -12,9 +12,13 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="🔴 Pokémon Reken-Gym Pro", page_icon="🔴", layout="centered")
 
+# Custom CSS voor perfecte leesbaarheid van het invoerveld
 st.markdown("""
     <style>
-    .stApp { background-color: #0f172a; color: #ffffff; }
+    .stApp { 
+        background-color: #0f172a; 
+        color: #ffffff; 
+    }
     .pokeball-card {
         background-color: #ffffff !important;
         border: 4px solid #facc15;
@@ -37,10 +41,22 @@ st.markdown("""
         color: #ffffff !important; box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         margin-bottom: 20px;
     }
-    .impostor-box {
-        background-color: #ffffff; color: #000000;
-        border: 3px solid #ef4444; border-radius: 15px; padding: 15px; margin-bottom: 20px;
+    
+    /* EXTRA STRAKKE EN LEESBARE STYLING VOOR HET INVOERVELD */
+    div[data-testid="stChatInput"] input {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-size: 1.6rem !important;
+        font-weight: bold !important;
+        border: 3px solid #facc15 !important;
+        border-radius: 14px !important;
     }
+    div[data-testid="stChatInput"] input::placeholder {
+        color: #64748b !important;
+        font-size: 1.2rem !important;
+        font-weight: normal !important;
+    }
+    
     .stButton>button {
         background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%) !important;
         color: #ffffff !important; font-size: 1.4rem !important;
@@ -187,7 +203,7 @@ else:
                     else: st.toast("❌ Niet alles klopt!", icon="💡")
                 except Exception: pass
 
-    # REGULIERE REKENVRAGEN MET st.chat_input (SLIMME AUTOFOCUS)
+    # REGULIERE REKENVRAGEN WITH ST.CHAT_INPUT
     else:
         st.write(f"**Ronde Voortgang: Vraag {st.session_state.sommen_teller + 1} van 10**")
         st.progress((st.session_state.sommen_teller + 1) / 10)
@@ -198,8 +214,7 @@ else:
         som_tekst, juist_ans = st.session_state.huidige_som
         st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
-        # CHAT INPUT BEWAART 100% DE CURSOR FOCUS ONDERAAN HET SCHERM
-        invoer_antwoord = st.chat_input("Typ je antwoord en druk op Enter...")
+        invoer_antwoord = st.chat_input("Typ je antwoord hier en druk op Enter...")
 
         if invoer_antwoord:
             try:
