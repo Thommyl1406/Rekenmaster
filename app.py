@@ -76,7 +76,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# POKÉMON AFBEELDINGEN URLs (Officiële PokeAPI Sprites)
+# POKÉMON AFBEELDINGEN URLs
 POKEMON_IMG = {
     "Pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
     "Charizard": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png",
@@ -273,15 +273,17 @@ else:
 
     st.divider()
 
-    # JavaScript script voor automatische focus op het getalleninvoerveld
+    # JavaScript voor automatische focus op het getallenveld
     components.html(
         """
         <script>
         const doc = window.parent.document;
-        const inputs = doc.querySelectorAll('input[type="number"]');
-        if (inputs.length > 0) {
-            inputs[0].focus();
-        }
+        setTimeout(() => {
+            const inputs = doc.querySelectorAll('input[type="number"]');
+            if (inputs.length > 0) {
+                inputs[0].focus();
+            }
+        }, 100);
         </script>
         """,
         height=0,
@@ -343,7 +345,7 @@ else:
             st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
 
         som_tekst, juist_ans = st.session_state.huidige_som
-        st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allowed_html=True)
+        st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
         with st.form(key=f"reken_form_{st.session_state.xp}", clear_on_submit=True):
             ans_invoer = st.number_input("Typ je antwoord (en druk op Enter):", step=1, value=None)
