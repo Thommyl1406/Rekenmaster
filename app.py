@@ -1,5 +1,6 @@
 import streamlit as st
 import random
+import streamlit.components.v1 as components
 from supabase import create_client
 
 # -------------------------------------------------------------
@@ -333,7 +334,6 @@ else:
         som_tekst, juist_ans = st.session_state.huidige_som
         st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
-        # HET GEHEIM VOOR DIRECTE FOCUS: EEN UNIEKE KEY PER VRAAG
         with st.form(key=f"reken_form_{st.session_state.vraag_id}", clear_on_submit=True):
             ans_invoer = st.number_input(
                 "Typ je antwoord (en druk op Enter):", 
@@ -365,10 +365,27 @@ else:
                     else:
                         st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
 
-                    # Verhoog de vraag_id zodat Streamlit het volgende invoerveld direct focust
                     st.session_state.vraag_id += 1
                     st.session_state.huidige_som = None
                     st.rerun()
+
+    # DYNAMISCH SCRIPT VOOR AUTO-SCROLL EN AUTO-FOCUS NAAR HET INVOERVELD
+    components.html(
+        f"""
+        <script>
+        const doc = window.parent.document;
+        setTimeout(() => {{
+            const inputField = doc.querySelector('input[data-testid="stNumberInputInput"]');
+            if (inputField) {{
+                inputField.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+                inputField.focus();
+                inputField.click();
+            }}
+        }}, 300);
+        </script>
+        """,
+        height=0,
+    )
 
     st.divider()
     if st.button("🚪 Uitloggen & Voortgang Bewaren"):
