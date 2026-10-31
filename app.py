@@ -1,5 +1,6 @@
 import streamlit as st
 import random
+import time
 from supabase import create_client
 
 # -------------------------------------------------------------
@@ -63,10 +64,6 @@ st.markdown("""
         padding: 12px 20px !important;
         box-shadow: 0 6px 0px #7f1d1d;
         width: 100% !important;
-    }
-    .stButton>button:active, .stFormSubmitButton>button:active {
-        transform: translateY(4px);
-        box-shadow: 0 2px 0px #7f1d1d;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -250,11 +247,11 @@ else:
         st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
 
     som_tekst, juist_ans = st.session_state.huidige_som
-    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allowed_html=True)
 
-    # FORMULIER WAARMEE ENTER DIRECT WERKT
+    # DIRECTE VERWERKING MET AUTOMATISCHE FOCUS
     with st.form(key=f"reken_form_{st.session_state.xp}", clear_on_submit=True):
-        ans_invoer = st.number_input("Typ je antwoord (en druk op Enter):", step=1, value=None)
+        ans_invoer = st.number_input("Typ je antwoord (en druk op Enter):", step=1, value=None, autofocus=True)
         submitted = st.form_submit_button("💥 GEBRUIK REKEN-AANVAL! ⚡")
 
         if submitted:
@@ -263,6 +260,7 @@ else:
                 
                 if ans_invoer == juist_ans:
                     st.session_state.xp += 1  # 1 XP per goed antwoord!
+                    st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
                     
                     # Direct opslaan in Supabase database
                     try:
@@ -276,11 +274,10 @@ else:
                         st.balloons()
                         st.snow()
                         st.toast(f"🎉 EVOLUTIE! Je bent geëvolueerd naar Level {nieuwe_lvl['level']} ({nieuwe_lvl['naam']})!", icon="🔴")
-                    else:
-                        st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
                 else:
                     st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
 
+                # Maak de som leeg zodat er direct een nieuwe verschijnt op Enter
                 st.session_state.huidige_som = None
                 st.rerun()
 
