@@ -12,7 +12,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="🔴 Pokémon Reken-Gym Pro", page_icon="🔴", layout="centered")
 
-# Custom CSS: Heldere vragen, zwarte typtekst en leesbare pop-ups
+# Custom CSS
 st.markdown("""
     <style>
     .stApp { 
@@ -42,14 +42,12 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* VRAGEN EN LABELS HELDERWIT */
     .stForm label, div[data-testid="stForm"] p {
         color: #ffffff !important;
         font-size: 1.3rem !important;
         font-weight: bold !important;
     }
 
-    /* INVOERVELDEN: ZWARTE TEKST OP WITTE ACHTERGROND */
     div[data-testid="stChatInput"] textarea,
     div[data-testid="stChatInput"] input,
     .stTextInput input {
@@ -70,7 +68,6 @@ st.markdown("""
         font-weight: normal !important;
     }
 
-    /* POP-UP MELDINGEN (TOASTS) */
     div[data-testid="stToast"] {
         background-color: #1e293b !important;
         color: #ffffff !important;
@@ -120,7 +117,6 @@ def bereken_level_info(totale_xp):
         volgende_lvl = LEVELS[-1]
     return huidige_lvl, volgende_lvl
 
-# INCLUSIEF BREUKEN & GEEN KOMMAGETALLEN
 def genereer_gemengde_som(level):
     keuze = random.choice(["maal", "deel", "plusmin", "breuk"])
     
@@ -154,43 +150,27 @@ def genereer_gemengde_som(level):
             ans, n2 = random.randint(4, 10), random.randint(3, 9)
         return f"{ans * n2} ÷ {n2}", ans
 
-    else: # Breuken (altijd hele getallen als uitkomst)
-        opties = [
-            ("1/2", 2),
-            ("1/4", 4),
-            ("3/4", 4),
-            ("1/3", 3),
-            ("2/3", 3)
-        ]
+    else:
+        opties = [("1/2", 2), ("1/4", 4), ("3/4", 4), ("1/3", 3), ("2/3", 3)]
         breuk_tekst, noemer = random.choice(opties)
-        
-        # Zorg dat de vermenigvuldiging altijd mooi deelt zonder komma's
         factor = random.randint(2, 8)
         totaal_getal = noemer * factor
         
-        if breuk_tekst == "1/2":
-            ans = totaal_getal // 2
-        elif breuk_tekst == "1/4":
-            ans = totaal_getal // 4
-        elif breuk_tekst == "3/4":
-            ans = (totaal_getal // 4) * 3
-        elif breuk_tekst == "1/3":
-            ans = totaal_getal // 3
-        elif breuk_tekst == "2/3":
-            ans = (totaal_getal // 3) * 2
+        if breuk_tekst == "1/2": ans = totaal_getal // 2
+        elif breuk_tekst == "1/4": ans = totaal_getal // 4
+        elif breuk_tekst == "3/4": ans = (totaal_getal // 4) * 3
+        elif breuk_tekst == "1/3": ans = totaal_getal // 3
+        elif breuk_tekst == "2/3": ans = (totaal_getal // 3) * 2
 
         return f"{breuk_tekst} van {totaal_getal}", ans
 
-# IMPOSTOR PUZZEL MET GEHELE GETALLEN
 def genereer_impostor_puzzel(level):
     pika = random.randint(4, 10)
     chari = random.randint(5, 10)
     blast = random.randint(2, 6)
-    
     c1 = pika + chari
     c2 = chari * blast
     c3 = (chari + pika) - blast
-    
     imp_juist = max(c1, c2, c3)
     return pika, chari, blast, c1, c2, c3, imp_juist
 
@@ -200,6 +180,25 @@ if "huidige_som" not in st.session_state: st.session_state.huidige_som = None
 if "huidige_impostor" not in st.session_state: st.session_state.huidige_impostor = None
 if "ingelogd" not in st.session_state: st.session_state.ingelogd = False
 if "speler_naam" not in st.session_state: st.session_state.speler_naam = ""
+if "is_admin" not in st.session_state: st.session_state.is_admin = False
+
+# ---------------- ADMIN SIDEBAR ----------------
+st.sidebar.title("👑 Gym Leader Admin")
+if not st.session_state.is_admin:
+    u = st.sidebar.text_input("Admin Name", key="au")
+    p = st.sidebar.text_input("Passcode", type="password", key="ap")
+    if st.sidebar.button("Inloggen als Admin"):
+        if u == "admin" and p == "admin123":
+            st.session_state.is_admin = True
+            st.sidebar.success("Welkom Admin!")
+            st.rerun()
+        else:
+            st.sidebar.error("Foute Passcode!")
+else:
+    st.sidebar.success("Ingelogd als Admin")
+    if st.sidebar.button("Uitloggen Admin"):
+        st.session_state.is_admin = False
+        st.rerun()
 
 st.title("🔴 POKÉMON REKEN-GYM ⚡")
 
@@ -290,7 +289,7 @@ else:
             st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
 
         som_tekst, juist_ans = st.session_state.huidige_som
-        st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allowed_html=True)
 
         invoer_antwoord = st.chat_input("Typ je antwoord hier en druk op Enter...")
 
@@ -316,3 +315,20 @@ else:
         st.session_state.huidige_som = None
         st.session_state.sommen_teller = 0
         st.rerun()
+
+# ---------------- ADMIN DASHBOARD OVERZICHT ----------------
+if st.session_state.is_admin:
+    st.divider()
+    st.subheader("📊 Gym Leader Admin Dashboard (Alle Spelers)")
+    try:
+        res = supabase.table("players").select("id, naam, xp, pincode").order("xp", desc=True).execute()
+        if res.data:
+            st.dataframe(res.data, use_container_width=True)
+            if st.button("🗑️ Wis Alle Spelers & Voortgang"):
+                supabase.table("players").delete().neq("id", 0).execute()
+                st.success("Alle spelers gewist!")
+                st.rerun()
+        else:
+            st.info("Nog geen geregistreerde spelers in de database.")
+    except Exception as e:
+        st.error(f"Fout bij ophalen spelers: {e}")
