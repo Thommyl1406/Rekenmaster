@@ -175,7 +175,7 @@ def genereer_impostor_puzzel(level):
     return pika, chari, blast, c1, c2, c3, imp_juist
 
 if "xp" not in st.session_state: st.session_state.xp = 0
-if "fouten" not in st.session_state: st.session_state.fouten = 0
+if "fouten" not in st.session_state or st.session_state.fouten is None: st.session_state.fouten = 0
 if "sommen_teller" not in st.session_state: st.session_state.sommen_teller = 0
 if "huidige_som" not in st.session_state: st.session_state.huidige_som = None
 if "huidige_impostor" not in st.session_state: st.session_state.huidige_impostor = None
@@ -216,8 +216,8 @@ if not st.session_state.ingelogd:
                     res = supabase.table("players").select("*").eq("naam", inlog_naam).execute()
                     if res.data and str(res.data[0]["pincode"]) == str(inlog_code):
                         st.session_state.speler_naam = inlog_naam
-                        st.session_state.xp = res.data[0].get("xp", 0)
-                        st.session_state.fouten = res.data[0].get("fouten", 0)
+                        st.session_state.xp = res.data[0].get("xp") or 0
+                        st.session_state.fouten = res.data[0].get("fouten") or 0
                         st.session_state.ingelogd = True
                         st.rerun()
                     else: st.error("Onjuiste gegevens!")
@@ -281,7 +281,7 @@ else:
                         st.toast("🎉 Puzzel opgelost! +2 XP verdiend!", icon="⭐")
                         st.rerun()
                     else: 
-                        st.session_state.fouten += 1
+                        st.session_state.fouten = (st.session_state.fouten or 0) + 1
                         supabase.table("players").update({"fouten": st.session_state.fouten}).eq("naam", st.session_state.speler_naam).execute()
                         st.toast("❌ Niet alles klopt!", icon="💡")
                 except Exception: pass
@@ -308,7 +308,7 @@ else:
                     supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
                     st.toast("⚡ AANVAL GESLAAGD! +1 XP! 🔴", icon="⭐")
                 else:
-                    st.session_state.fouten += 1
+                    st.session_state.fouten = (st.session_state.fouten or 0) + 1
                     supabase.table("players").update({"fouten": st.session_state.fouten}).eq("naam", st.session_state.speler_naam).execute()
                     st.toast(f"❌ GEMIST! Het antwoord was {juist_ans}.", icon="💡")
 
@@ -324,14 +324,13 @@ else:
         st.session_state.sommen_teller = 0
         st.rerun()
 
-# ---------------- ADMIN DASHBOARD OVERZICHT & INDIVIDUELE RESET ----------------
+# ---------------- ADMIN DASHBOARD OVERZICHT ----------------
 if st.session_state.is_admin:
     st.divider()
     st.subheader("📊 Gym Leader Admin Dashboard")
     try:
         res = supabase.table("players").select("id, naam, xp, fouten, pincode").order("xp", desc=True).execute()
         if res.data:
-            # Overzichtstabel tonen inclusief Fouten
             st.dataframe(res.data, use_container_width=True)
 
             st.write("### ⚙️ Beheer per Speler")
