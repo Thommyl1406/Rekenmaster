@@ -12,13 +12,9 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="🔴 Pokémon Reken-Gym Pro", page_icon="🔴", layout="centered")
 
-# Custom CSS voor perfecte styling en leesbaarheid
 st.markdown("""
     <style>
-    .stApp {
-        background-color: #0f172a;
-        color: #ffffff;
-    }
+    .stApp { background-color: #0f172a; color: #ffffff; }
     .pokeball-card {
         background-color: #ffffff !important;
         border: 4px solid #facc15;
@@ -30,51 +26,31 @@ st.markdown("""
         margin-bottom: 25px;
     }
     .level-badge {
-        background-color: #ef4444;
-        color: #ffffff;
-        font-weight: bold;
-        padding: 6px 18px;
-        border-radius: 50px;
-        font-size: 1.2rem;
-        display: inline-block;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        background-color: #ef4444; color: #ffffff; font-weight: bold;
+        padding: 6px 18px; border-radius: 50px; font-size: 1.2rem;
+        display: inline-block; margin-bottom: 10px;
     }
     .som-card {
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        border: 4px solid #facc15;
-        border-radius: 20px;
-        padding: 25px;
-        text-align: center;
-        font-size: 3.5rem;
-        font-weight: bold;
-        color: #ffffff !important;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        border: 4px solid #facc15; border-radius: 20px; padding: 25px;
+        text-align: center; font-size: 3.5rem; font-weight: bold;
+        color: #ffffff !important; box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         margin-bottom: 20px;
     }
     .impostor-box {
-        background-color: #ffffff;
-        color: #000000;
-        border: 3px solid #ef4444;
-        border-radius: 15px;
-        padding: 15px;
-        margin-bottom: 20px;
+        background-color: #ffffff; color: #000000;
+        border: 3px solid #ef4444; border-radius: 15px; padding: 15px; margin-bottom: 20px;
     }
-    .stButton>button, .stFormSubmitButton>button {
+    .stButton>button {
         background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%) !important;
-        color: #ffffff !important;
-        font-size: 1.4rem !important;
-        font-weight: bold !important;
-        border-radius: 14px !important;
-        border: 3px solid #facc15 !important;
-        padding: 12px 20px !important;
-        box-shadow: 0 6px 0px #7f1d1d;
+        color: #ffffff !important; font-size: 1.4rem !important;
+        font-weight: bold !important; border-radius: 14px !important;
+        border: 3px solid #facc15 !important; padding: 12px 20px !important;
         width: 100% !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# POKÉMON AFBEELDINGEN
 POKEMON_IMG = {
     "Pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
     "Charizard": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png",
@@ -93,16 +69,13 @@ LEVELS = [
 def bereken_level_info(totale_xp):
     huidige_lvl = LEVELS[0]
     volgende_lvl = LEVELS[1]
-    
     for i in range(len(LEVELS) - 1):
         if totale_xp >= LEVELS[i]["xp_nodig"]:
             huidige_lvl = LEVELS[i]
             volgende_lvl = LEVELS[i + 1] if (i + 1) < len(LEVELS) else LEVELS[i]
-            
     if totale_xp >= LEVELS[-1]["xp_nodig"]:
         huidige_lvl = LEVELS[-1]
         volgende_lvl = LEVELS[-1]
-        
     return huidige_lvl, volgende_lvl
 
 def genereer_gemengde_som(level):
@@ -127,10 +100,8 @@ def genereer_impostor_puzzel(level):
     c1, c2, c3 = pika + chari, chari * blast, (chari + pika) - blast
     return pika, chari, blast, c1, c2, c3, c2
 
-# Sessie Variabelen
 if "xp" not in st.session_state: st.session_state.xp = 0
 if "sommen_teller" not in st.session_state: st.session_state.sommen_teller = 0
-if "vraag_id" not in st.session_state: st.session_state.vraag_id = 0
 if "huidige_som" not in st.session_state: st.session_state.huidige_som = None
 if "huidige_impostor" not in st.session_state: st.session_state.huidige_impostor = None
 if "ingelogd" not in st.session_state: st.session_state.ingelogd = False
@@ -138,7 +109,6 @@ if "speler_naam" not in st.session_state: st.session_state.speler_naam = ""
 
 st.title("🔴 POKÉMON REKEN-GYM ⚡")
 
-# ---------------- INLOGSCHERM ----------------
 if not st.session_state.ingelogd:
     st.subheader("🎒 Trainer Inloggen / Registreren")
     inlog_naam = st.text_input("Wat is je Trainer Naam?").strip().lower()
@@ -155,9 +125,8 @@ if not st.session_state.ingelogd:
                         st.session_state.xp = res.data[0]["xp"]
                         st.session_state.ingelogd = True
                         st.rerun()
-                    else:
-                        st.error("Onjuiste gegevens!")
-                except Exception as e: st.error("Inlogfout!")
+                    else: st.error("Onjuiste gegevens!")
+                except Exception: st.error("Fout bij inloggen!")
     with col2:
         if st.button("✨ NIEUW ACCOUNT MAKEN", use_container_width=True):
             if inlog_naam and inlog_code:
@@ -167,9 +136,8 @@ if not st.session_state.ingelogd:
                     st.session_state.xp = 0
                     st.session_state.ingelogd = True
                     st.rerun()
-                except Exception as e: st.error("Naam bestaat al!")
+                except Exception: st.error("Naam bestaat al!")
 
-# ---------------- SPEELSCHERM ----------------
 else:
     huidige_lvl, volgende_lvl = bereken_level_info(st.session_state.xp)
 
@@ -187,7 +155,7 @@ else:
 
     st.divider()
 
-    # IMPOSTOR CHALLENGE
+    # IMPOSTOR PUZZEL
     if st.session_state.sommen_teller >= 10:
         st.subheader("🕵️ VERPLICHTE CHALLENGE: ONTMASKER DE IMPOSTOR!")
         if st.session_state.huidige_impostor is None:
@@ -200,7 +168,7 @@ else:
         with col_p2: st.image(POKEMON_IMG["Charizard"], width=60); st.write(f"**Charizard = {chari}**")
         with col_p3: st.image(POKEMON_IMG["Blastoise"], width=60); st.write(f"**Blastoise = {blast}**")
 
-        with st.form(key=f"imp_form_{st.session_state.vraag_id}", clear_on_submit=True):
+        with st.form(key="imp_form", clear_on_submit=True):
             a1 = st.text_input(f"1) Pikachu ({pika}) + Charizard ({chari}) = ?")
             a2 = st.text_input(f"2) Charizard ({chari}) × Blastoise ({blast}) = ?")
             a3 = st.text_input(f"3) (Charizard + Pikachu) - Blastoise = ?")
@@ -213,14 +181,13 @@ else:
                         st.session_state.xp += 2
                         st.session_state.sommen_teller = 0
                         st.session_state.huidige_impostor = None
-                        st.session_state.vraag_id += 1
                         supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
                         st.toast("🎉 Puzzel opgelost! +2 XP verdiend!", icon="⭐")
                         st.rerun()
                     else: st.toast("❌ Niet alles klopt!", icon="💡")
-                except: pass
+                except Exception: pass
 
-    # REGULIERE REKENVRAGEN
+    # REGULIERE REKENVRAGEN MET st.chat_input (SLIMME AUTOFOCUS)
     else:
         st.write(f"**Ronde Voortgang: Vraag {st.session_state.sommen_teller + 1} van 10**")
         st.progress((st.session_state.sommen_teller + 1) / 10)
@@ -231,42 +198,24 @@ else:
         som_tekst, juist_ans = st.session_state.huidige_som
         st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
-        with st.form(key=f"reken_form_{st.session_state.vraag_id}", clear_on_submit=True):
-            ans_invoer_str = st.text_input("Typ je antwoord (en druk op Enter):", key=f"input_{st.session_state.vraag_id}")
-            if st.form_submit_button("💥 GEBRUIK REKEN-AANVAL!"):
-                if ans_invoer_str.strip() != "":
-                    try:
-                        ans_invoer = int(ans_invoer_str.strip())
-                        if ans_invoer == juist_ans:
-                            st.session_state.xp += 1
-                            st.session_state.sommen_teller += 1
-                            supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
-                            st.toast("⚡ AANVAL GESLAAGD! +1 XP! 🔴", icon="⭐")
-                        else:
-                            st.toast(f"❌ GEMIST! Het antwoord was {juist_ans}.", icon="💡")
+        # CHAT INPUT BEWAART 100% DE CURSOR FOCUS ONDERAAN HET SCHERM
+        invoer_antwoord = st.chat_input("Typ je antwoord en druk op Enter...")
 
-                        st.session_state.vraag_id += 1
-                        st.session_state.huidige_som = None
-                        st.rerun()
-                    except ValueError: pass
+        if invoer_antwoord:
+            try:
+                ans_invoer = int(invoer_antwoord.strip())
+                if ans_invoer == juist_ans:
+                    st.session_state.xp += 1
+                    st.session_state.sommen_teller += 1
+                    supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
+                    st.toast("⚡ AANVAL GESLAAGD! +1 XP! 🔴", icon="⭐")
+                else:
+                    st.toast(f"❌ GEMIST! Het antwoord was {juist_ans}.", icon="💡")
 
-    # SLIM SCRIPT DIE HET INVOERVELD AUTOMATISCH DIRECT FOCUSSEREN
-    st.components.v1.html("""
-        <script>
-        const doc = window.parent.document;
-        function fixFocus() {
-            const inputs = doc.querySelectorAll('input[type="text"]');
-            inputs.forEach(input => {
-                if (input.placeholder.includes("Typ je antwoord")) {
-                    input.focus();
-                    input.select();
-                }
-            });
-        }
-        setTimeout(fixFocus, 100);
-        setTimeout(fixFocus, 300);
-        </script>
-    """, height=0)
+                st.session_state.huidige_som = None
+                st.rerun()
+            except ValueError:
+                st.toast("⚠️ Typ een geldig getal!", icon="⚠️")
 
     st.divider()
     if st.button("🚪 Uitloggen & Voortgang Bewaren"):
