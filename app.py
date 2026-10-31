@@ -53,7 +53,7 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         margin-bottom: 25px;
     }
-    .stButton>button {
+    .stButton>button, .stFormSubmitButton>button {
         background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%) !important;
         color: #ffffff !important;
         font-size: 1.4rem !important;
@@ -62,8 +62,9 @@ st.markdown("""
         border: 3px solid #facc15 !important;
         padding: 12px 20px !important;
         box-shadow: 0 6px 0px #7f1d1d;
+        width: 100% !important;
     }
-    .stButton>button:active {
+    .stButton>button:active, .stFormSubmitButton>button:active {
         transform: translateY(4px);
         box-shadow: 0 2px 0px #7f1d1d;
     }
@@ -249,36 +250,39 @@ else:
         st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
 
     som_tekst, juist_ans = st.session_state.huidige_som
-    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)  # <-- Gecorrigeerd naar unsafe_allow_html
+    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
-    ans_invoer = st.number_input("Typ je antwoord en val aan:", step=1, value=None, key=f"q_{st.session_state.xp}")
+    # FORMULIER WAARMEE ENTER DIRECT WERKT
+    with st.form(key=f"reken_form_{st.session_state.xp}", clear_on_submit=True):
+        ans_invoer = st.number_input("Typ je antwoord (en druk op Enter):", step=1, value=None)
+        submitted = st.form_submit_button("💥 GEBRUIK REKEN-AANVAL! ⚡")
 
-    if st.button("💥 GEBRUIK REKEN-AANVAL! ⚡", use_container_width=True):
-        if ans_invoer is not None:
-            oude_lvl = huidige_lvl['level']
-            
-            if ans_invoer == juist_ans:
-                st.session_state.xp += 1  # 1 XP per goed antwoord!
+        if submitted:
+            if ans_invoer is not None:
+                oude_lvl = huidige_lvl['level']
                 
-                # Direct opslaan in Supabase database
-                try:
-                    supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
-                except Exception:
-                    pass
+                if ans_invoer == juist_ans:
+                    st.session_state.xp += 1  # 1 XP per goed antwoord!
+                    
+                    # Direct opslaan in Supabase database
+                    try:
+                        supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
+                    except Exception:
+                        pass
 
-                # Check voor Level Up / Evolutie!
-                nieuwe_lvl, _ = bereken_level_info(st.session_state.xp)
-                if nieuwe_lvl['level'] > oude_lvl:
-                    st.balloons()
-                    st.snow()
-                    st.toast(f"🎉 EVOLUTIE! Je bent geëvolueerd naar Level {nieuwe_lvl['level']} ({nieuwe_lvl['naam']})!", icon="🔴")
+                    # Check voor Level Up / Evolutie!
+                    nieuwe_lvl, _ = bereken_level_info(st.session_state.xp)
+                    if nieuwe_lvl['level'] > oude_lvl:
+                        st.balloons()
+                        st.snow()
+                        st.toast(f"🎉 EVOLUTIE! Je bent geëvolueerd naar Level {nieuwe_lvl['level']} ({nieuwe_lvl['naam']})!", icon="🔴")
+                    else:
+                        st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
                 else:
-                    st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
-            else:
-                st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
+                    st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
 
-            st.session_state.huidige_som = None
-            st.rerun()
+                st.session_state.huidige_som = None
+                st.rerun()
 
     if st.button("🚪 Uitloggen & Voortgang Bewaren"):
         st.session_state.ingelogd = False
