@@ -3,7 +3,7 @@ import random
 from supabase import create_client
 
 # -------------------------------------------------------------
-# JOUW UNIEKE SUPABASE CLOUD GEGEVENS (INGEVULD)
+# JOUW UNIEKE SUPABASE CLOUD GEGEVENS
 # -------------------------------------------------------------
 SUPABASE_URL = "https://iwootoqaieisilkylotg.supabase.co"
 SUPABASE_KEY = "sb_publishable_dAOMuXRA6lUMrPbieCpcVA_VMWQCSs-"
@@ -22,6 +22,30 @@ if "game_over" not in st.session_state:
     st.session_state.game_over = False
 if "huidige_som" not in st.session_state:
     st.session_state.huidige_som = None
+if "is_admin" not in st.session_state:
+    st.session_state.is_admin = False
+
+# ---------------- ZIJBALK: ADMIN LOGIN ----------------
+st.sidebar.title("👑 Beheerderspaneel")
+
+if not st.session_state.is_admin:
+    st.sidebar.subheader("Admin Login")
+    admin_user = st.sidebar.text_input("Gebruikersnaam", key="admin_u")
+    admin_pass = st.sidebar.text_input("Wachtwoord", type="password", key="admin_p")
+    
+    if st.sidebar.button("Inloggen als Admin"):
+        # INSTELBAAR WACHTWOORD EN GEBRUIKERSNAAM:
+        if admin_user == "admin" and admin_pass == "admin123":
+            st.session_state.is_admin = True
+            st.sidebar.success("Succesvol ingelogd!")
+            st.rerun()
+        else:
+            st.sidebar.error("Onjuiste gegevens!")
+else:
+    st.sidebar.success("🔑 Ingelogd als Admin")
+    if st.sidebar.button("Uitloggen"):
+        st.session_state.is_admin = False
+        st.rerun()
 
 st.title("🎮 RekenMaster Arcade Online")
 
@@ -105,23 +129,32 @@ elif st.session_state.game_over:
                 "modus": st.session_state.gekozen_modus
             }).execute()
             st.session_state.opgeslagen = True
-            st.success("Je resultaat is automatisch opgeslagen in de Cloud Database! ☁️")
-        except Exception as e:
-            st.warning("Let op: Zorg dat de tabel 'scores' is aangemaakt in Supabase.")
+            st.success("Je resultaat is opgeslagen in de cloud! ☁️")
+        except Exception:
+            st.warning("Let op: Zorg dat de tabel 'scores' aanwezig is in Supabase.")
 
     if st.button("Opnieuw Spelen 🔄", use_container_width=True):
         st.session_state.clear()
         st.rerun()
 
-# ---------------- LIVE RANGLIJST VAN ALLE SPELERS ----------------
+# ---------------- EXCLUSIEF ADMIN DASHBOARD ----------------
 st.divider()
-st.subheader("📊 Live Ranglijst (Cloud Scores)")
 
-try:
-    res = supabase.table("scores").select("created_at, naam, score, totaal, modus").order("score", desc=True).execute()
-    if res.data:
-        st.dataframe(res.data, use_container_width=True)
-    else:
-        st.info("Nog geen cloud-scores aanwezig.")
-except Exception:
-    st.info("De ranglijst verschijnt hier zodra de eerste score is opgeslagen.")
+if st.session_state.is_admin:
+    st.subheader("📊 Admin Live Cloud Dashboard")
+    try:
+        res = supabase.table("scores").select("id, created_at, naam, score, totaal, modus").order("id", desc=True).execute()
+        if res.data:
+            st.dataframe(res.data, use_container_width=True)
+            
+            # Mogelijkheid om de database te wissen als Admin
+            if st.button("🗑️ Wis Alle Scores uit Cloud"):
+                supabase.table("scores").delete().neq("id", 0).execute()
+                st.success("Alle scores zijn gewist!")
+                st.rerun()
+        else:
+            st.info("Er staan momenteel geen scores in de database.")
+    except Exception as e:
+        st.error(f"Fout bij het ophalen van gegevens: {e}")
+else:
+    st.info("🔒 Log in via de linkerzijbalk als Admin om de volledige live scorelijst te bekijken.")
