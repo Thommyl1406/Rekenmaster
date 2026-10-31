@@ -12,7 +12,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="🔴 Pokémon Reken-Gym Pro", page_icon="🔴", layout="centered")
 
-# Custom CSS: Helder witte tekst voor vragen + Zwarte tekst in invoervelden
+# Custom CSS: Heldere vragen, zwarte typtekst en leesbare pop-ups
 st.markdown("""
     <style>
     .stApp { 
@@ -42,8 +42,8 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* ALLE VRAGEN EN LABELS EXTRA GROOT EN FELWIT MAKEN */
-    label, div[data-testid="stMarkdownContainer"] p {
+    /* VRAGEN EN LABELS HELDERWIT */
+    .stForm label, div[data-testid="stForm"] p {
         color: #ffffff !important;
         font-size: 1.3rem !important;
         font-weight: bold !important;
@@ -68,6 +68,19 @@ st.markdown("""
         -webkit-text-fill-color: #64748b !important;
         font-size: 1.2rem !important;
         font-weight: normal !important;
+    }
+
+    /* STYLING VOOR POP-UP MELDINGEN (TOASTS) */
+    div[data-testid="stToast"] {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border: 2px solid #facc15 !important;
+        border-radius: 12px !important;
+    }
+    div[data-testid="stToast"] p, div[data-testid="stToast"] div {
+        color: #ffffff !important;
+        font-size: 1.1rem !important;
+        font-weight: bold !important;
     }
     
     .stButton>button {
