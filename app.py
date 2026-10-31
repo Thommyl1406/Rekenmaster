@@ -13,7 +13,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="🔴 Pokémon Reken-Gym Pro", page_icon="🔴", layout="centered")
 
-# Custom CSS voor perfecte leesbaarheid en Pokémon-stijl
+# Custom CSS voor leesbaarheid en Pokémon-stijl
 st.markdown("""
     <style>
     .stApp {
@@ -75,13 +75,21 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Pokémon Rangen & Level Drempels
+# POKÉMON AFBEELDINGEN URLs (Officiële PokeAPI Sprites)
+POKEMON_IMG = {
+    "Pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
+    "Charizard": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png",
+    "Blastoise": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/9.png",
+    "Mewtwo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png"
+}
+
+# LEVEL-DREMPELS
 LEVELS = [
-    {"level": 1, "naam": "⚡ Pikachu Trainer", "xp_nodig": 0, "avatar": "⚡"},
-    {"level": 2, "naam": "🔥 Charmeleon Gym-Uitdager", "xp_nodig": 20, "avatar": "🦎"},
-    {"level": 3, "naam": "🌊 Blastoise Reken-Master", "xp_nodig": 50, "avatar": "🐢"},
-    {"level": 4, "naam": "🐉 Dragonite Elite Four", "xp_nodig": 100, "avatar": "🐉"},
-    {"level": 5, "naam": "👑 Mewtwo Reken-Champion", "xp_nodig": 200, "avatar": "🔮"}
+    {"level": 1, "naam": "Pikachu Trainer", "xp_nodig": 0, "img": POKEMON_IMG["Pikachu"]},
+    {"level": 2, "naam": "Charmeleon Gym-Uitdager", "xp_nodig": 50, "img": POKEMON_IMG["Charizard"]},
+    {"level": 3, "naam": "Blastoise Reken-Master", "xp_nodig": 120, "img": POKEMON_IMG["Blastoise"]},
+    {"level": 4, "naam": "Dragonite Elite Four", "xp_nodig": 250, "img": POKEMON_IMG["Charizard"]},
+    {"level": 5, "naam": "Mewtwo Reken-Champion", "xp_nodig": 500, "img": POKEMON_IMG["Mewtwo"]}
 ]
 
 def bereken_level_info(totale_xp):
@@ -99,7 +107,7 @@ def bereken_level_info(totale_xp):
         
     return huidige_lvl, volgende_lvl
 
-# AUTOMATISCHE GEMENGDE SOM-GENERATOR
+# GEMENGDE SOM-GENERATOR
 def genereer_gemengde_som(level):
     keuze = random.choice(["maal", "deel", "plusmin"])
     
@@ -137,19 +145,34 @@ def genereer_gemengde_som(level):
             ans, n2 = random.randint(12, 25), random.randint(8, 15)
         return f"{ans * n2} ÷ {n2}", ans
 
+# IMPOSTOR PUZZEL GENERATOR
+def genereer_impostor_puzzel(level):
+    pika = random.randint(10, 25)
+    chari = random.randint(15, 30)
+    blast = random.randint(6, 15)
+    
+    ans1 = pika + chari
+    ans2 = chari * blast
+    ans3 = (chari + pika) - blast
+    
+    impostor = ans2  # De vermenigvuldiging is de Impostor
+    return pika, chari, blast, ans1, ans2, ans3, impostor
+
 # Sessie variabelen
 if "xp" not in st.session_state:
     st.session_state.xp = 0
+if "sommen_teller" not in st.session_state:
+    st.session_state.sommen_teller = 0
 if "huidige_som" not in st.session_state:
     st.session_state.huidige_som = None
+if "huidige_impostor" not in st.session_state:
+    st.session_state.huidige_impostor = None
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 if "ingelogd" not in st.session_state:
     st.session_state.ingelogd = False
 if "speler_naam" not in st.session_state:
     st.session_state.speler_naam = ""
-if "modus" not in st.session_state:
-    st.session_state.modus = "normaal"
 
 # ---------------- ADMIN SIDEBAR ----------------
 st.sidebar.title("👑 Gym Leader Admin")
@@ -229,31 +252,79 @@ if not st.session_state.ingelogd:
 else:
     huidige_lvl, volgende_lvl = bereken_level_info(st.session_state.xp)
 
-    # Bovensectie met spelersstatus
-    st.markdown(f"""
-    <div class="pokeball-card">
-        <div class="level-badge">GYM LEVEL {huidige_lvl['level']}</div>
-        <h2 style="margin: 8px 0; font-size: 2rem; color: #000000;">{huidige_lvl['avatar']} {huidige_lvl['naam']}</h2>
-        <h3 style="margin: 0; color: #dc2626; font-size: 1.4rem;">🔴 Trainer: <b>{st.session_state.speler_naam.capitalize()}</b> | Totaal XP: <b>{st.session_state.xp} XP</b></h3>
-    </div>
-    """, unsafe_allow_html=True)
+    # Bovensectie met spelersstatus & Pokémon-afbeelding
+    c_img, c_info = st.columns([1, 3])
+    with c_img:
+        st.image(huidige_lvl["img"], width=100)
+    with c_info:
+        st.markdown(f"### GYM LEVEL {huidige_lvl['level']}: {huidige_lvl['naam']}")
+        st.markdown(f"🔴 Trainer: **{st.session_state.speler_naam.capitalize()}** | Totaal XP: **{st.session_state.xp} XP**")
 
-    # Schakelen tussen Normale Modus en Impostor-Puzzel
-    col_m1, col_m2 = st.columns(2)
-    with col_m1:
-        if st.button("⚔️ Normale Battle", use_container_width=True):
-            st.session_state.modus = "normaal"
-            st.rerun()
-    with col_m2:
-        if st.button("🕵️ Ontmasker de Impostor!", use_container_width=True):
-            st.session_state.modus = "impostor"
-            st.rerun()
+    # Voortgangsbalk naar volgend level
+    if huidige_lvl['level'] < 5:
+        xp_in_dit_level = st.session_state.xp - huidige_lvl['xp_nodig']
+        xp_nodig_in_dit_level = volgende_lvl['xp_nodig'] - huidige_lvl['xp_nodig']
+        voortgang = min(max(xp_in_dit_level / xp_nodig_in_dit_level, 0.0), 1.0)
+        st.progress(voortgang)
+        st.caption(f"Nog {volgende_lvl['xp_nodig'] - st.session_state.xp} XP nodig voor Level {volgende_lvl['level']}!")
+    else:
+        st.success("🎉 Je bent de absolute Pokémon Champion!")
 
     st.divider()
 
-    # ---------------- MODUS 1: NORMAAL REKENEN ----------------
-    if st.session_state.modus == "normaal":
-        # Genereer automatisch een gemengde som
+    # ---------------- NA ELKE 10 SOMMEN: VERPLICHTE VISUELE IMPOSTOR PUZZEL ----------------
+    if st.session_state.sommen_teller >= 10:
+        st.subheader("🕵️ VERPLICHTE CHALLENGE: ONTMASKER DE IMPOSTOR!")
+        st.write("Los de Pokémon-afbeeldingen puzzel op om weer door te gaan!")
+
+        if st.session_state.huidige_impostor is None:
+            st.session_state.huidige_impostor = genereer_impostor_puzzel(huidige_lvl['level'])
+
+        pika, chari, blast, c1, c2, c3, imp_juist = st.session_state.huidige_impostor
+
+        # Visuele Legende met echte Afbeeldingen
+        st.markdown("### 📜 Pokémon Waarden Kaart:")
+        col_p1, col_p2, col_p3 = st.columns(3)
+        with col_p1:
+            st.image(POKEMON_IMG["Pikachu"], width=60)
+            st.write(f"**Pikachu = {pika}**")
+        with col_p2:
+            st.image(POKEMON_IMG["Charizard"], width=60)
+            st.write(f"**Charizard = {chari}**")
+        with col_p3:
+            st.image(POKEMON_IMG["Blastoise"], width=60)
+            st.write(f"**Blastoise = {blast}**")
+
+        st.divider()
+
+        with st.form(key=f"imp_form_{st.session_state.xp}", clear_on_submit=True):
+            a1 = st.number_input(f"1) Pikachu ({pika}) + Charizard ({chari}) = ?", step=1)
+            a2 = st.number_input(f"2) Charizard ({chari}) × Blastoise ({blast}) = ?", step=1)
+            a3 = st.number_input(f"3) (Charizard + Pikachu) - Blastoise = ?", step=1)
+            imp_gekozen = st.number_input("🚨 Welke uitkomst is de GROOTSTE (De Impostor)?", step=1)
+
+            if st.form_submit_button("🔥 ONTMASKER EN GA DOOR!"):
+                if a1 == c1 and a2 == c2 and a3 == c3 and imp_gekozen == imp_juist:
+                    st.balloons()
+                    st.session_state.xp += 2  # 2 XP bonus
+                    st.session_state.sommen_teller = 0  # Reset teller
+                    st.session_state.huidige_impostor = None
+                    
+                    try:
+                        supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
+                    except Exception:
+                        pass
+
+                    st.toast("🎉 GEWELDIG! Puzzel opgelost! +2 XP verdiend! 🔴", icon="⭐")
+                    st.rerun()
+                else:
+                    st.toast("❌ Niet alle antwoorden kloppen nog! Reken goed na.", icon="💡")
+
+    # ---------------- REGULIERE GEMENGDE SOMMEN (10 STUKS) ----------------
+    else:
+        st.write(f"**Ronde Voortgang: Vraag {st.session_state.sommen_teller + 1} van 10**")
+        st.progress((st.session_state.sommen_teller + 1) / 10)
+
         if st.session_state.huidige_som is None:
             st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
 
@@ -269,7 +340,8 @@ else:
                     oude_lvl = huidige_lvl['level']
                     
                     if ans_invoer == juist_ans:
-                        st.session_state.xp += 1  # 1 XP per goed antwoord!
+                        st.session_state.xp += 1  # 1 XP per goed antwoord
+                        st.session_state.sommen_teller += 1
                         st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
                         
                         try:
@@ -288,60 +360,12 @@ else:
                     st.session_state.huidige_som = None
                     st.rerun()
 
-    # ---------------- MODUS 2: IMPOSTOR PUZZEL (PICO-CODE) ----------------
-    else:
-        st.subheader("🕵️ ONTMASKER DE IMPOSTOR!")
-        st.write("Bereken de waarden van de Pokémon en vind het antwoord dat de **IMPOSTOR** is!")
-
-        # Vaste getallen per Pokémon
-        pika = 12
-        chari = 25
-        blast = 8
-        mew = 50
-
-        st.markdown("""
-        <div class="impostor-box">
-            <h4>📜 Pokémon Waarden Kaart:</h4>
-            <b>⚡ Pikachu</b> = 12 &nbsp;&nbsp;|&nbsp;&nbsp; 
-            <b>🔥 Charizard</b> = 25 &nbsp;&nbsp;|&nbsp;&nbsp; 
-            <b>🌊 Blastoise</b> = 8 &nbsp;&nbsp;|&nbsp;&nbsp; 
-            <b>🔮 Mewtwo</b> = 50
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.write("### ❓ Los de Puzzels op:")
-        
-        # Puzzel 1: Pikachu + Charizard
-        ans1 = st.number_input("1) ⚡ Pikachu + 🔥 Charizard = ?", step=1, key="imp_1")
-        # Puzzel 2: Mewtwo - Blastoise
-        ans2 = st.number_input("2) 🔮 Mewtwo - 🌊 Blastoise = ?", step=1, key="imp_2")
-        # Puzzel 3: Charizard × Blastoise
-        ans3 = st.number_input("3) 🔥 Charizard × 🌊 Blastoise = ?", step=1, key="imp_3")
-
-        st.write("---")
-        impostor_keuze = st.number_input("🚨 Welke van de bovenstaande uitkomsten is gelijk aan 42? (De Impostor)", step=1, key="imp_ans")
-
-        if st.button("🔥 CONTROLEER IMPOSTOR PUZZEL", use_container_width=True):
-            corr1 = pika + chari  # 37
-            corr2 = mew - blast   # 42  <-- Impostor!
-            corr3 = chari * blast # 200
-
-            if ans1 == corr1 and ans2 == corr2 and ans3 == corr3 and impostor_keuze == 42:
-                st.balloons()
-                st.session_state.xp += 5
-                try:
-                    supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
-                except Exception:
-                    pass
-                st.success("🎉 GEWELDIG! Je hebt alle rekenpuzzels én de Impostor ontmaskerd! **+5 BONUS XP!** 🔴")
-            else:
-                st.error("❌ Oeps! Niet alle antwoorden waren juist. Kijk goed naar de Pokémon-waarden en reken opnieuw uit!")
-
     st.divider()
     if st.button("🚪 Uitloggen & Voortgang Bewaren"):
         st.session_state.ingelogd = False
         st.session_state.huidige_som = None
-        st.session_state.modus = "normaal"
+        st.session_state.huidige_impostor = None
+        st.session_state.sommen_teller = 0
         st.rerun()
 
 # ---------------- ADMIN DASHBOARD ----------------
@@ -354,7 +378,7 @@ if st.session_state.is_admin:
             st.dataframe(res.data, use_container_width=True)
             if st.button("🗑️ Wis Alle Spelers & Voortgang"):
                 supabase.table("players").delete().neq("id", 0).execute()
-                st.success("Alle scores gewist!")
+                st.success("Alle spelers gewist!")
                 st.rerun()
         else:
             st.info("Nog geen geregistreerde spelers in de database.")
