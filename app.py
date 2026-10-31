@@ -1,423 +1,585 @@
-import streamlit as st
-import random
-import streamlit.components.v1 as components
-from supabase import create_client
-
-# -------------------------------------------------------------
-# JOUW UNIEKE SUPABASE CLOUD GEGEVENS
-# -------------------------------------------------------------
-SUPABASE_URL = "https://iwootoqaieisilkylotg.supabase.co"
-SUPABASE_KEY = "sb_publishable_dAOMuXRA6lUMrPbieCpcVA_VMWQCSs-"
-
-# Initialiseer de database
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-st.set_page_config(page_title="🔴 Pokémon Reken-Gym Pro", page_icon="🔴", layout="centered")
-
-# Custom CSS voor leesbaarheid en Pokémon-stijl
-st.markdown("""
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔴 Pokémon Reken-Gym Pro ⚡</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-    .stApp {
-        background-color: #0f172a;
-        color: #ffffff;
-    }
-    .pokeball-card {
-        background-color: #ffffff !important;
-        border: 4px solid #facc15;
-        border-radius: 20px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-        color: #000000 !important;
-        margin-bottom: 25px;
-    }
-    .level-badge {
-        background-color: #ef4444;
-        color: #ffffff;
-        font-weight: bold;
-        padding: 6px 18px;
-        border-radius: 50px;
-        font-size: 1.2rem;
-        display: inline-block;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .som-card {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        border: 4px solid #facc15;
-        border-radius: 20px;
-        padding: 25px;
-        text-align: center;
-        font-size: 3rem;
-        font-weight: bold;
-        color: #ffffff !important;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-        margin-bottom: 20px;
-    }
-    .impostor-box {
-        background-color: #ffffff;
-        color: #000000;
-        border: 3px solid #ef4444;
-        border-radius: 15px;
-        padding: 15px;
-        margin-bottom: 20px;
-    }
-    .stButton>button, .stFormSubmitButton>button {
-        background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%) !important;
-        color: #ffffff !important;
-        font-size: 1.4rem !important;
-        font-weight: bold !important;
-        border-radius: 14px !important;
-        border: 3px solid #facc15 !important;
-        padding: 12px 20px !important;
-        box-shadow: 0 6px 0px #7f1d1d;
-        width: 100% !important;
-    }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        /* Pokeball styling accenten */
+        .pokeball-card {
+            background-color: #ffffff !important;
+            border: 4px solid #facc15;
+            border-radius: 24px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            color: #0f172a !important;
+        }
+
+        .som-card {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border: 4px solid #facc15;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+        }
+
+        .poke-btn {
+            background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+            border: 3px solid #facc15;
+            box-shadow: 0 6px 0px #7f1d1d;
+            transition: all 0.1s ease;
+        }
+
+        .poke-btn:hover {
+            background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0px #7f1d1d;
+        }
+
+        .poke-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px #7f1d1d;
+        }
+
+        /* Toast animatie */
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-animate {
+            animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ef4444;
+            border-radius: 4px;
+        }
     </style>
-""", unsafe_allow_html=True)
+</head>
+<body class="flex flex-col items-center justify-start p-4 md:p-6 min-h-screen">
 
-# POKÉMON AFBEELDINGEN URLs
-POKEMON_IMG = {
-    "Pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
-    "Charizard": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png",
-    "Blastoise": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/9.png",
-    "Mewtwo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png"
-}
+    <!-- Toast Meldingen Container -->
+    <div id="toast-container" class="fixed top-5 z-50 flex flex-col items-center gap-2 pointer-events-none w-full max-w-md px-4"></div>
 
-# LEVEL-DREMPELS
-LEVELS = [
-    {"level": 1, "naam": "Pikachu Trainer", "xp_nodig": 0, "img": POKEMON_IMG["Pikachu"]},
-    {"level": 2, "naam": "Charmeleon Gym-Uitdager", "xp_nodig": 50, "img": POKEMON_IMG["Charizard"]},
-    {"level": 3, "naam": "Blastoise Reken-Master", "xp_nodig": 120, "img": POKEMON_IMG["Blastoise"]},
-    {"level": 4, "naam": "Dragonite Elite Four", "xp_nodig": 250, "img": POKEMON_IMG["Charizard"]},
-    {"level": 5, "naam": "Mewtwo Reken-Champion", "xp_nodig": 500, "img": POKEMON_IMG["Mewtwo"]}
-]
+    <!-- Header Title -->
+    <header class="text-center my-4">
+        <h1 class="text-3xl md:text-5xl font-black tracking-wider text-yellow-400 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] flex items-center justify-center gap-3">
+            <span class="text-red-500 animate-bounce">🔴</span> POKÉMON REKEN-GYM <span class="text-yellow-400">⚡</span>
+        </h1>
+    </header>
 
-def bereken_level_info(totale_xp):
-    huidige_lvl = LEVELS[0]
-    volgende_lvl = LEVELS[1]
-    
-    for i in range(len(LEVELS) - 1):
-        if totale_xp >= LEVELS[i]["xp_nodig"]:
-            huidige_lvl = LEVELS[i]
-            volgende_lvl = LEVELS[i + 1] if (i + 1) < len(LEVELS) else LEVELS[i]
+    <!-- INLOG- / REGISTRATIESCHERM -->
+    <main id="auth-screen" class="w-full max-w-md my-auto">
+        <div class="pokeball-card p-6 md:p-8 text-center">
+            <div class="inline-block bg-red-500 text-white font-bold px-4 py-1.5 rounded-full text-sm mb-4 shadow">
+                🎒 TRAINER TOEGANG
+            </div>
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Welkom Trainer!</h2>
+            <p class="text-slate-600 font-medium mb-6 text-sm">Vul je Trainer Naam en een geheime 4-cijferige pincode in om je voortgang op te slaan.</p>
+
+            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-left text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Trainer Naam</label>
+                    <input type="text" id="trainer-name" required placeholder="bijv. Ash Ketchum" class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-red-500 font-bold text-slate-800 text-lg shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-left text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">4-Cijferige Pincode</label>
+                    <input type="password" id="trainer-pin" maxlength="4" pattern="\d{4}" required placeholder="****" class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-red-500 font-bold text-slate-800 text-lg tracking-widest text-center shadow-sm">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="submit" onclick="authAction = 'login'" class="poke-btn text-white font-black py-3 px-4 rounded-xl text-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-right-to-bracket"></i> Inloggen
+                    </button>
+                    <button type="submit" onclick="authAction = 'register'" class="bg-yellow-400 hover:bg-yellow-300 text-slate-900 border-2 border-yellow-600 font-black py-3 px-4 rounded-xl text-lg shadow-[0_6px_0px_#ca8a04] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-plus"></i> Nieuw
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- SPEELSCHERM (REKEN-GYM) -->
+    <main id="game-screen" class="w-full max-w-xl hidden space-y-6 my-auto">
+
+        <!-- Trainer Profile / Level Status Card -->
+        <div class="pokeball-card p-5 relative overflow-hidden">
+            <div class="flex items-center gap-4">
+                <div class="relative bg-slate-100 p-2 rounded-2xl border-2 border-yellow-400 shadow-inner">
+                    <img id="poke-avatar" src="" alt="Pokemon Avatar" class="w-20 h-20 object-contain">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="inline-block bg-red-500 text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-1 shadow">
+                        Gym Level <span id="lbl-level-num">1</span>
+                    </div>
+                    <h2 id="lbl-level-name" class="text-xl md:text-2xl font-black text-slate-900 truncate">Pikachu Trainer</h2>
+                    <p class="text-sm font-bold text-slate-600 flex items-center gap-2 mt-0.5">
+                        <i class="fa-solid fa-user-ninja text-red-500"></i> Trainer: <span id="lbl-trainer-name" class="text-slate-900 capitalize">...</span>
+                    </p>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-bold text-slate-500 uppercase">Totaal XP</div>
+                    <div class="text-2xl md:text-3xl font-black text-red-600 flex items-center justify-end gap-1">
+                        <span id="lbl-xp">0</span> <span class="text-lg">🔴</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voortgangsbalk -->
+            <div class="mt-4 pt-3 border-t border-slate-100">
+                <div class="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                    <span>Level Voortgang</span>
+                    <span id="lbl-xp-needed">Nog ... XP tot volgend level</span>
+                </div>
+                <div class="w-full bg-slate-200 h-3.5 rounded-full overflow-hidden p-0.5 border border-slate-300">
+                    <div id="progress-bar" class="bg-gradient-to-r from-red-500 to-yellow-400 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REKEN-ARENA (REGULIERE SOMMEN) -->
+        <div id="regular-arena" class="space-y-4">
+            <!-- Progressie binnen ronde (10 sommen) -->
+            <div class="flex items-center justify-between text-sm font-bold text-slate-300 px-2">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-flag-checkered text-yellow-400"></i> Ronde Voortgang: Vraag <span id="lbl-question-count">1</span> van 10</span>
+                <button onclick="logout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                    <i class="fa-solid fa-right-from-bracket"></i> Uitloggen
+                </button>
+            </div>
             
-    if totale_xp >= LEVELS[-1]["xp_nodig"]:
-        huidige_lvl = LEVELS[-1]
-        volgende_lvl = LEVELS[-1]
-        
-    return huidige_lvl, volgende_lvl
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+                <div id="round-progress-bar" class="bg-yellow-400 h-full transition-all duration-200" style="width: 10%"></div>
+            </div>
 
-# GEMENGDE SOM-GENERATOR
-def genereer_gemengde_som(level):
-    keuze = random.choice(["maal", "deel", "plusmin"])
-    
-    if keuze == "maal":
-        if level == 1:
-            n1, n2 = random.randint(6, 12), random.randint(4, 12)
-        elif level == 2:
-            n1, n2 = random.randint(11, 15), random.randint(6, 12)
-        elif level == 3:
-            n1, n2 = random.randint(12, 20), random.randint(8, 15)
-        else:
-            n1, n2 = random.randint(15, 25), random.randint(12, 20)
-        return f"{n1} × {n2}", n1 * n2
+            <!-- Som Display Card -->
+            <div class="som-card p-6 md:p-8 text-center text-white">
+                <div class="text-xs font-bold text-yellow-300 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bolt"></i> Reken-Aanval Klaarzetten
+                </div>
+                <div id="som-display" class="text-4xl md:text-6xl font-black tracking-tight text-white drop-shadow-md">
+                    12 × 5 = ?
+                </div>
+            </div>
 
-    elif keuze == "plusmin":
-        if level == 1:
-            n1, n2 = random.randint(25, 80), random.randint(15, 60)
-            return f"{n1} + {n2}", n1 + n2
-        elif level == 2:
-            n1, n2, n3 = random.randint(40, 150), random.randint(20, 90), random.randint(10, 50)
-            return f"{n1} + {n2} - {n3}", n1 + n2 - n3
-        elif level == 3:
-            n1, n2 = random.randint(100, 300), random.randint(50, 200)
-            return f"{n1} + {n2}", n1 + n2
-        else:
-            n1, n2, n3 = random.randint(150, 500), random.randint(100, 350), random.randint(50, 200)
-            return f"{n1} + {n2} - {n3}", n1 + n2 - n3
+            <!-- Invoer Formulier -->
+            <form id="answer-form" onsubmit="submitAnswer(event)" class="space-y-3">
+                <div>
+                    <input type="number" id="answer-input" required autocomplete="off" placeholder="Typ je antwoord..." class="w-full text-center py-4 px-6 rounded-2xl bg-white text-slate-900 text-3xl font-black border-4 border-yellow-400 shadow-xl focus:outline-none focus:ring-4 focus:ring-red-500 transition">
+                </div>
+                <button type="submit" class="poke-btn w-full text-white font-black text-xl py-4 rounded-2xl flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-fire text-yellow-300"></i> BEVESTIG ANTWOORD [ENTER]
+                </button>
+            </form>
+        </div>
 
-    else: # Delen
-        if level == 1:
-            ans, n2 = random.randint(6, 12), random.randint(4, 12)
-        elif level == 2:
-            ans, n2 = random.randint(10, 15), random.randint(6, 12)
-        else:
-            ans, n2 = random.randint(12, 25), random.randint(8, 15)
-        return f"{ans * n2} ÷ {n2}", ans
+        <!-- IMPOSTOR ARENA (VERPLICHTE VISUELE PUZZEL NA 10 SOMMEN) -->
+        <div id="impostor-arena" class="hidden pokeball-card p-6 border-4 border-red-500">
+            <div class="text-center mb-4">
+                <span class="bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow">
+                    🕵️ SPECIAL CHALLENGE
+                </span>
+                <h3 class="text-2xl font-black text-slate-900 mt-2">Ontmasker de Impostor!</h3>
+                <p class="text-xs text-slate-600 font-bold">Reken de Pokémon-waarden uit en vind de GROOTSTE uitkomst (de Impostor)!</p>
+            </div>
 
-# IMPOSTOR PUZZEL GENERATOR
-def genereer_impostor_puzzel(level):
-    pika = random.randint(10, 25)
-    chari = random.randint(15, 30)
-    blast = random.randint(6, 15)
-    
-    ans1 = pika + chari
-    ans2 = chari * blast
-    ans3 = (chari + pika) - blast
-    
-    impostor = ans2
-    return pika, chari, blast, ans1, ans2, ans3, impostor
+            <!-- Legende Kaart -->
+            <div class="bg-slate-100 rounded-2xl p-4 border-2 border-slate-200 mb-5">
+                <div class="text-xs font-bold text-slate-500 uppercase text-center mb-3">📜 Pokémon Waarden Sleutel</div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center">
+                        <img id="imp-img-pika" src="" class="w-12 h-12 object-contain">
+                        <span class="text-xs font-bold text-slate-700">Pikachu</span>
+                        <span id="imp-val-pika" class="text-lg font-black text-red-600">12</span>
+                    </div>
+                    <div class="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center">
+                        <img id="imp-img-chari" src="" class="w-12 h-12 object-contain">
+                        <span class="text-xs font-bold text-slate-700">Charizard</span>
+                        <span id="imp-val-chari" class="text-lg font-black text-red-600">25</span>
+                    </div>
+                    <div class="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center">
+                        <img id="imp-img-blast" src="" class="w-12 h-12 object-contain">
+                        <span class="text-xs font-bold text-slate-700">Blastoise</span>
+                        <span id="imp-val-blast" class="text-lg font-black text-red-600">8</span>
+                    </div>
+                </div>
+            </div>
 
-# Sessie variabelen
-if "xp" not in st.session_state:
-    st.session_state.xp = 0
-if "sommen_teller" not in st.session_state:
-    st.session_state.sommen_teller = 0
-if "vraag_id" not in st.session_state:
-    st.session_state.vraag_id = 0
-if "huidige_som" not in st.session_state:
-    st.session_state.huidige_som = None
-if "huidige_impostor" not in st.session_state:
-    st.session_state.huidige_impostor = None
-if "is_admin" not in st.session_state:
-    st.session_state.is_admin = False
-if "ingelogd" not in st.session_state:
-    st.session_state.ingelogd = False
-if "speler_naam" not in st.session_state:
-    st.session_state.speler_naam = ""
+            <!-- Impostor Vragen Formulier -->
+            <form id="impostor-form" onsubmit="submitImpostor(event)" class="space-y-4">
+                <div class="space-y-3">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <label id="lbl-imp-q1" class="block text-sm font-bold text-slate-800 mb-1">1) Pikachu + Charizard = ?</label>
+                        <input type="number" id="imp-ans-1" required placeholder="Antwoord 1" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <label id="lbl-imp-q2" class="block text-sm font-bold text-slate-800 mb-1">2) Charizard × Blastoise = ?</label>
+                        <input type="number" id="imp-ans-2" required placeholder="Antwoord 2" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <label id="lbl-imp-q3" class="block text-sm font-bold text-slate-800 mb-1">3) (Charizard + Pikachu) - Blastoise = ?</label>
+                        <input type="number" id="imp-ans-3" required placeholder="Antwoord 3" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-xl border-2 border-red-300">
+                        <label class="block text-sm font-black text-red-700 mb-1">🚨 Wat is de GROOTSTE uitkomst (de Impostor)?</label>
+                        <input type="number" id="imp-ans-final" required placeholder="Vul de grootste uitkomst in..." class="w-full px-3 py-2 border-2 border-red-400 rounded-lg font-black text-red-900 focus:outline-none focus:border-red-600">
+                    </div>
+                </div>
 
-# ---------------- ADMIN SIDEBAR ----------------
-st.sidebar.title("👑 Gym Leader Admin")
-if not st.session_state.is_admin:
-    u = st.sidebar.text_input("Admin Name", key="au")
-    p = st.sidebar.text_input("Passcode", type="password", key="ap")
-    if st.sidebar.button("Inloggen als Admin"):
-        if u == "admin" and p == "admin123":
-            st.session_state.is_admin = True
-            st.sidebar.success("Welkom Admin!")
-            st.rerun()
-        else:
-            st.sidebar.error("Foute Passcode!")
-else:
-    st.sidebar.success("Ingelogd als Admin")
-    if st.sidebar.button("Uitloggen Admin"):
-        st.session_state.is_admin = False
-        st.rerun()
+                <button type="submit" class="poke-btn w-full text-white font-black text-lg py-3 rounded-xl shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-mask"></i> ONTMASKER EN VERDIEN +2 XP!
+                </button>
+            </form>
+        </div>
+    </main>
 
-st.title("🔴 POKÉMON REKEN-GYM ⚡")
+    <!-- JavaScript Logica -->
+    <script>
+        // Officiële Pokémon API Sprites
+        const POKEMON_SPRITES = {
+            Pikachu: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
+            Charmeleon: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/5.png",
+            Charizard: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png",
+            Blastoise: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/9.png",
+            Mewtwo: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png"
+        };
 
-# ---------------- INLOG- & REGISTRATIESCHERM ----------------
-if not st.session_state.ingelogd:
-    st.subheader("🎒 Trainer Inloggen / Registreren")
-    
-    inlog_naam = st.text_input("Wat is je Trainer Naam?").strip().lower()
-    inlog_code = st.text_input("Vul een geheime 4-cijferige Pincode in:", type="password", max_chars=4)
+        // Level Configuratie & Moeilijkheid
+        const LEVELS = [
+            { level: 1, name: "Pikachu Trainer", xpNeeded: 0, sprite: POKEMON_SPRITES.Pikachu },
+            { level: 2, name: "Charmeleon Gym-Uitdager", xpNeeded: 50, sprite: POKEMON_SPRITES.Charmeleon },
+            { level: 3, name: "Blastoise Reken-Master", xpNeeded: 120, sprite: POKEMON_SPRITES.Blastoise },
+            { level: 4, name: "Charizard Elite Four", xpNeeded: 250, sprite: POKEMON_SPRITES.Charizard },
+            { level: 5, name: "Mewtwo Reken-Champion", xpNeeded: 500, sprite: POKEMON_SPRITES.Mewtwo }
+        ];
 
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("🚀 INLOGGEN", use_container_width=True):
-            if inlog_naam and inlog_code:
-                try:
-                    res = supabase.table("players").select("*").eq("naam", inlog_naam).execute()
-                    if res.data:
-                        speler_data = res.data[0]
-                        if str(speler_data["pincode"]) == str(inlog_code):
-                            st.session_state.speler_naam = inlog_naam
-                            st.session_state.xp = speler_data["xp"]
-                            st.session_state.ingelogd = True
-                            st.success(f"Welkom terug {inlog_naam.capitalize()}!")
-                            st.rerun()
-                        else:
-                            st.error("Onjuiste pincode voor deze trainer!")
-                    else:
-                        st.warning("Trainer niet gevonden. Klik op 'Nieuw Account Maken'.")
-                except Exception as e:
-                    st.error(f"Fout bij inloggen: {e}")
-            else:
-                st.warning("Vul zowel een naam als pincode in.")
+        // App State
+        let currentUser = null;
+        let authAction = 'login';
+        let currentProblem = null;
+        let currentImpostorPuzzle = null;
+        let questionCounter = 0; // 0 t/m 9, bij 10 -> Impostor challenge
 
-    with col2:
-        if st.button("✨ NIEUW ACCOUNT MAKEN", use_container_width=True):
-            if inlog_naam and inlog_code:
-                try:
-                    res = supabase.table("players").select("*").eq("naam", inlog_naam).execute()
-                    if res.data:
-                        st.error("Deze naam bestaat al! Kies een andere naam of log in.")
-                    else:
-                        supabase.table("players").insert({
-                            "naam": inlog_naam,
-                            "pincode": str(inlog_code),
-                            "xp": 0
-                        }).execute()
-                        st.session_state.speler_naam = inlog_naam
-                        st.session_state.xp = 0
-                        st.session_state.ingelogd = True
-                        st.success("Account aangemaakt! Veel succes met je training!")
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"Fout bij maken account: {e}")
-            else:
-                st.warning("Vul een naam en 4-cijferige pincode in.")
+        // Initialisatie
+        window.onload = () => {
+            const savedSession = localStorage.getItem('poke_gym_current_session');
+            if (savedSession) {
+                const userData = localStorage.getItem(`poke_gym_user_${savedSession}`);
+                if (userData) {
+                    currentUser = JSON.parse(userData);
+                    loadGameScreen();
+                    return;
+                }
+            }
+            showAuthScreen();
+        };
 
-# ---------------- SPEELSCHERM ----------------
-else:
-    huidige_lvl, volgende_lvl = bereken_level_info(st.session_state.xp)
+        // --- AUTHENTICATIE MET LOCALSTORAGE ---
+        function handleAuth(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('trainer-name').value.trim().toLowerCase();
+            const pinInput = document.getElementById('trainer-pin').value.trim();
 
-    # Bovensectie met spelersstatus & Pokémon-afbeelding
-    c_img, c_info = st.columns([1, 3])
-    with c_img:
-        st.image(huidige_lvl["img"], width=100)
-    with c_info:
-        st.markdown(f"### GYM LEVEL {huidige_lvl['level']}: {huidige_lvl['naam']}")
-        st.markdown(f"🔴 Trainer: **{st.session_state.speler_naam.capitalize()}** | Totaal XP: **{st.session_state.xp} XP**")
+            if (!nameInput || pinInput.length !== 4) {
+                showToast('❌ Vul een geldige naam en 4-cijferige pincode in!', 'error');
+                return;
+            }
 
-    # Voortgangsbalk naar volgend level
-    if huidige_lvl['level'] < 5:
-        xp_in_dit_level = st.session_state.xp - huidige_lvl['xp_nodig']
-        xp_nodig_in_dit_level = volgende_lvl['xp_nodig'] - huidige_lvl['xp_nodig']
-        voortgang = min(max(xp_in_dit_level / xp_nodig_in_dit_level, 0.0), 1.0)
-        st.progress(voortgang)
-        st.caption(f"Nog {volgende_lvl['xp_nodig'] - st.session_state.xp} XP nodig voor Level {volgende_lvl['level']}!")
-    else:
-        st.success("🎉 Je bent de absolute Pokémon Champion!")
+            const storageKey = `poke_gym_user_${nameInput}`;
+            const existingUser = localStorage.getItem(storageKey);
 
-    st.divider()
+            if (authAction === 'register') {
+                if (existingUser) {
+                    showToast('⚠️ Deze trainer bestaat al! Kies Inloggen.', 'error');
+                    return;
+                }
+                currentUser = { name: nameInput, pin: pinInput, xp: 0 };
+                localStorage.setItem(storageKey, JSON.stringify(currentUser));
+                localStorage.setItem('poke_gym_current_session', nameInput);
+                showToast('✨ Trainer account succesvol aangemaakt!', 'success');
+                loadGameScreen();
+            } else {
+                if (!existingUser) {
+                    showToast('❌ Trainer niet gevonden! Maak eerst een nieuw account aan.', 'error');
+                    return;
+                }
+                const parsedUser = JSON.parse(existingUser);
+                if (parsedUser.pin !== pinInput) {
+                    showToast('🔒 Onjuiste pincode voor deze trainer!', 'error');
+                    return;
+                }
+                currentUser = parsedUser;
+                localStorage.setItem('poke_gym_current_session', nameInput);
+                showToast(`⚡ Welkom terug, ${currentUser.name.toUpperCase()}!`, 'success');
+                loadGameScreen();
+            }
+        }
 
-    # ---------------- NA ELKE 10 SOMMEN: VERPLICHTE VISUELE IMPOSTOR PUZZEL ----------------
-    if st.session_state.sommen_teller >= 10:
-        st.subheader("🕵️ VERPLICHTE CHALLENGE: ONTMASKER DE IMPOSTOR!")
-        st.write("Los de Pokémon-afbeeldingen puzzel op om weer door te gaan!")
+        function logout() {
+            localStorage.removeItem('poke_gym_current_session');
+            currentUser = null;
+            document.getElementById('auth-form').reset();
+            showAuthScreen();
+            showToast('👋 Succesvol uitgelogd. Tot de volgende battle!', 'info');
+        }
 
-        if st.session_state.huidige_impostor is None:
-            st.session_state.huidige_impostor = genereer_impostor_puzzel(huidige_lvl['level'])
+        function showAuthScreen() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+        }
 
-        pika, chari, blast, c1, c2, c3, imp_juist = st.session_state.huidige_impostor
+        function loadGameScreen() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('lbl-trainer-name').innerText = currentUser.name;
+            
+            questionCounter = 0;
+            updateUserUI();
+            nextQuestion();
+        }
 
-        st.markdown("### 📜 Pokémon Waarden Kaart:")
-        col_p1, col_p2, col_p3 = st.columns(3)
-        with col_p1:
-            st.image(POKEMON_IMG["Pikachu"], width=60)
-            st.write(f"**Pikachu = {pika}**")
-        with col_p2:
-            st.image(POKEMON_IMG["Charizard"], width=60)
-            st.write(f"**Charizard = {chari}**")
-        with col_p3:
-            st.image(POKEMON_IMG["Blastoise"], width=60)
-            st.write(f"**Blastoise = {blast}**")
+        function saveUserData() {
+            if (currentUser) {
+                localStorage.setItem(`poke_gym_user_${currentUser.name}`, JSON.stringify(currentUser));
+            }
+        }
 
-        st.divider()
+        // --- LEVEL LOGICA ---
+        function getLevelInfo(xp) {
+            let current = LEVELS[0];
+            let next = LEVELS[1];
+            for (let i = 0; i < LEVELS.length - 1; i++) {
+                if (xp >= LEVELS[i].xpNeeded) {
+                    current = LEVELS[i];
+                    next = LEVELS[i + 1] || LEVELS[i];
+                }
+            }
+            if (xp >= LEVELS[LEVELS.length - 1].xpNeeded) {
+                current = LEVELS[LEVELS.length - 1];
+                next = LEVELS[LEVELS.length - 1];
+            }
+            return { current, next };
+        }
 
-        with st.form(key=f"imp_form_{st.session_state.vraag_id}", clear_on_submit=True):
-            a1_str = st.text_input(f"1) Pikachu ({pika}) + Charizard ({chari}) = ?")
-            a2_str = st.text_input(f"2) Charizard ({chari}) × Blastoise ({blast}) = ?")
-            a3_str = st.text_input(f"3) (Charizard + Pikachu) - Blastoise = ?")
-            imp_gekozen_str = st.text_input("🚨 Welke uitkomst is de GROOTSTE (De Impostor)?")
+        function updateUserUI() {
+            const { current, next } = getLevelInfo(currentUser.xp);
+            
+            document.getElementById('lbl-level-num').innerText = current.level;
+            document.getElementById('lbl-level-name').innerText = current.name;
+            document.getElementById('poke-avatar').src = current.sprite;
+            document.getElementById('lbl-xp').innerText = currentUser.xp;
 
-            if st.form_submit_button("🔥 ONTMASKER EN GA DOOR!"):
-                try:
-                    a1, a2, a3, imp_gekozen = int(a1_str), int(a2_str), int(a3_str), int(imp_gekozen_str)
-                    if a1 == c1 and a2 == c2 and a3 == c3 and imp_gekozen == imp_juist:
-                        st.balloons()
-                        st.session_state.xp += 2
-                        st.session_state.sommen_teller = 0
-                        st.session_state.huidige_impostor = None
-                        st.session_state.vraag_id += 1
-                        
-                        try:
-                            supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
-                        except Exception:
-                            pass
+            if (current.level < 5) {
+                const currentLevelXP = currentUser.xp - current.xpNeeded;
+                const neededForNext = next.xpNeeded - current.xpNeeded;
+                const pct = Math.min(Math.max((currentLevelXP / neededForNext) * 100, 0), 100);
+                
+                document.getElementById('progress-bar').style.width = `${pct}%`;
+                document.getElementById('lbl-xp-needed').innerText = `Nog ${next.xpNeeded - currentUser.xp} XP tot Level ${next.level}`;
+            } else {
+                document.getElementById('progress-bar').style.width = `100%`;
+                document.getElementById('lbl-xp-needed').innerText = `MAX LEVEL ERREIKT! 🏆`;
+            }
+        }
 
-                        st.toast("🎉 GEWELDIG! Puzzel opgelost! +2 XP verdiend! 🔴", icon="⭐")
-                        st.rerun()
-                    else:
-                        st.toast("❌ Niet alle antwoorden kloppen nog! Reken goed na.", icon="💡")
-                except ValueError:
-                    st.toast("⚠️ Typ getallen in alle vakjes!", icon="⚠️")
+        // --- DYNAMISCHE SOMMEN GENERATOR ---
+        function generateProblem(level) {
+            const types = ['multiply', 'divide', 'plusminus'];
+            const chosenType = types[Math.floor(Math.random() * types.length)];
 
-    # ---------------- REGULIERE GEMENGDE SOMMEN (10 STUKS) ----------------
-    else:
-        st.write(f"**Ronde Voortgang: Vraag {st.session_state.sommen_teller + 1} van 10**")
-        st.progress((st.session_state.sommen_teller + 1) / 10)
+            let num1, num2, num3, answer, questionText;
 
-        if st.session_state.huidige_som is None:
-            st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
+            if (chosenType === 'multiply') {
+                if (level === 1) { num1 = rand(6, 12); num2 = rand(4, 10); }
+                else if (level === 2) { num1 = rand(11, 15); num2 = rand(6, 12); }
+                else if (level === 3) { num1 = rand(12, 18); num2 = rand(8, 14); }
+                else { num1 = rand(14, 25); num2 = rand(12, 20); }
+                
+                answer = num1 * num2;
+                questionText = `${num1} × ${num2}`;
+            } else if (chosenType === 'divide') {
+                if (level === 1) { answer = rand(6, 12); num2 = rand(4, 10); }
+                else if (level === 2) { answer = rand(10, 15); num2 = rand(6, 12); }
+                else { answer = rand(12, 22); num2 = rand(8, 15); }
 
-        som_tekst, juist_ans = st.session_state.huidige_som
-        st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
+                num1 = answer * num2;
+                questionText = `${num1} ÷ ${num2}`;
+            } else {
+                // Plus & Min met 3 getallen bij hogere levels
+                if (level === 1) {
+                    num1 = rand(25, 80); num2 = rand(15, 60);
+                    answer = num1 + num2;
+                    questionText = `${num1} + ${num2}`;
+                } else if (level === 2) {
+                    num1 = rand(40, 120); num2 = rand(20, 80); num3 = rand(10, 40);
+                    answer = num1 + num2 - num3;
+                    questionText = `${num1} + ${num2} - ${num3}`;
+                } else {
+                    num1 = rand(100, 350); num2 = rand(50, 200); num3 = rand(30, 150);
+                    answer = num1 + num2 - num3;
+                    questionText = `${num1} + ${num2} - ${num3}`;
+                }
+            }
 
-        with st.form(key=f"reken_form_{st.session_state.vraag_id}", clear_on_submit=True):
-            ans_invoer_str = st.text_input(
-                "Typ je antwoord (en druk op Enter):", 
-                key=f"input_box_{st.session_state.vraag_id}"
-            )
-            submitted = st.form_submit_button("💥 GEBRUIK REKEN-AANVAL! ⚡")
+            return { questionText, answer };
+        }
 
-            if submitted:
-                if ans_invoer_str.strip() != "":
-                    try:
-                        ans_invoer = int(ans_invoer_str.strip())
-                        oude_lvl = huidige_lvl['level']
-                        
-                        if ans_invoer == juist_ans:
-                            st.session_state.xp += 1
-                            st.session_state.sommen_teller += 1
-                            st.toast("⚡ AANVAL GESLAAGD! +1 XP opgeslagen! 🔴", icon="⭐")
-                            
-                            try:
-                                supabase.table("players").update({"xp": st.session_state.xp}).eq("naam", st.session_state.speler_naam).execute()
-                            except Exception:
-                                pass
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
 
-                            nieuwe_lvl, _ = bereken_level_info(st.session_state.xp)
-                            if nieuwe_lvl['level'] > oude_lvl:
-                                st.balloons()
-                                st.snow()
-                                st.toast(f"🎉 EVOLUTIE! Je bent geëvolueerd naar Level {nieuwe_lvl['level']} ({nieuwe_lvl['naam']})!", icon="🔴")
-                        else:
-                            st.toast(f"❌ AANVAL GEMIST! Het juiste antwoord was {juist_ans}.", icon="💡")
+        // --- VOLGENDE VRAAG ENGINE EN AUTOMATISCHE FOCUS ---
+        function nextQuestion() {
+            if (questionCounter >= 10) {
+                showImpostorArena();
+                return;
+            }
 
-                        st.session_state.vraag_id += 1
-                        st.session_state.huidige_som = None
-                        st.rerun()
-                    except ValueError:
-                        st.toast("⚠️ Typ een geldig getal in!", icon="⚠️")
+            document.getElementById('regular-arena').classList.remove('hidden');
+            document.getElementById('impostor-arena').classList.add('hidden');
 
-    # DIRECTE FOCUS OP HET ECHTE INPUT ELEMENT IN DE BROWSER
-    components.html(
-        f"""
-        <script>
-        const doc = window.parent.document;
-        function setFocus() {{
-            const inputs = doc.querySelectorAll('input[type="text"]');
-            for (let input of inputs) {{
-                if (input.placeholder !== "Wat is je Trainer Naam?" && !input.readOnly) {{
-                    input.focus();
-                    input.select();
-                    break;
-                }}
-            }}
-        }}
-        setTimeout(setFocus, 150);
-        setTimeout(setFocus, 400);
-        </script>
-        """,
-        height=0,
-    )
+            const { current } = getLevelInfo(currentUser.xp);
+            currentProblem = generateProblem(current.level);
 
-    st.divider()
-    if st.button("🚪 Uitloggen & Voortgang Bewaren"):
-        st.session_state.ingelogd = False
-        st.session_state.huidige_som = None
-        st.session_state.huidige_impostor = None
-        st.session_state.sommen_teller = 0
-        st.rerun()
+            document.getElementById('som-display').innerText = `${currentProblem.questionText} = ?`;
+            document.getElementById('lbl-question-count').innerText = questionCounter + 1;
+            document.getElementById('round-progress-bar').style.width = `${((questionCounter + 1) / 10) * 100}%`;
 
-# ---------------- ADMIN DASHBOARD ----------------
-if st.session_state.is_admin:
-    st.divider()
-    st.subheader("📊 Gym Leader Admin Dashboard (Alle Spelers)")
-    try:
-        res = supabase.table("players").select("id, naam, xp, pincode").order("xp", desc=True).execute()
-        if res.data:
-            st.dataframe(res.data, use_container_width=True)
-            if st.button("🗑️ Wis Alle Spelers & Voortgang"):
-                supabase.table("players").delete().neq("id", 0).execute()
-                st.success("Alle spelers gewist!")
-                st.rerun()
-        else:
-            st.info("Nog geen geregistreerde spelers in de database.")
-    except Exception as e:
-        st.error(f"Fout bij ophalen spelers: {e}")
+            const inputField = document.getElementById('answer-input');
+            inputField.value = '';
+            
+            // GARANTIE VOOR CRITICAL FEATURE 5: Directe autofocus zonder re-render
+            requestAnimationFrame(() => {
+                inputField.focus();
+            });
+        }
+
+        function submitAnswer(e) {
+            e.preventDefault();
+            const inputField = document.getElementById('answer-input');
+            const val = parseInt(inputField.value, 10);
+
+            if (isNaN(val)) return;
+
+            const oldLevel = getLevelInfo(currentUser.xp).current.level;
+
+            if (val === currentProblem.answer) {
+                currentUser.xp += 1;
+                questionCounter += 1;
+                saveUserData();
+                updateUserUI();
+
+                const newLevel = getLevelInfo(currentUser.xp).current.level;
+                if (newLevel > oldLevel) {
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    showToast(`🎉 EVOLUTIE! Je bent geëvolueerd naar Gym Level ${newLevel}!`, 'success');
+                } else {
+                    showToast('⚡ AANVAL GESLAAGD! +1 XP verdiend! 🔴', 'success');
+                }
+            } else {
+                showToast(`❌ OEPS! Het juiste antwoord was ${currentProblem.answer}.`, 'error');
+            }
+
+            nextQuestion();
+        }
+
+        // --- IMPOSTOR PUZZEL LOGICA ---
+        function showImpostorArena() {
+            document.getElementById('regular-arena').classList.add('hidden');
+            document.getElementById('impostor-arena').classList.remove('hidden');
+
+            const pika = rand(10, 25);
+            const chari = rand(15, 30);
+            const blast = rand(6, 15);
+
+            const ans1 = pika + chari;
+            const ans2 = chari * blast; // Dit is de vermenigvuldiging -> grootste -> Impostor
+            const ans3 = (chari + pika) - blast;
+
+            currentImpostorPuzzle = { pika, chari, blast, ans1, ans2, ans3, correctImpostor: ans2 };
+
+            // Beelden en waarden instellen
+            document.getElementById('imp-img-pika').src = POKEMON_SPRITES.Pikachu;
+            document.getElementById('imp-img-chari').src = POKEMON_SPRITES.Charizard;
+            document.getElementById('imp-img-blast').src = POKEMON_SPRITES.Blastoise;
+
+            document.getElementById('imp-val-pika').innerText = pika;
+            document.getElementById('imp-val-chari').innerText = chari;
+            document.getElementById('imp-val-blast').innerText = blast;
+
+            document.getElementById('lbl-imp-q1').innerText = `1) Pikachu (${pika}) + Charizard (${chari}) = ?`;
+            document.getElementById('lbl-imp-q2').innerText = `2) Charizard (${chari}) × Blastoise (${blast}) = ?`;
+            document.getElementById('lbl-imp-q3').innerText = `3) (Charizard + Pikachu) - Blastoise = ?`;
+
+            document.getElementById('impostor-form').reset();
+            
+            requestAnimationFrame(() => {
+                document.getElementById('imp-ans-1').focus();
+            });
+        }
+
+        function submitImpostor(e) {
+            e.preventDefault();
+            const a1 = parseInt(document.getElementById('imp-ans-1').value, 10);
+            const a2 = parseInt(document.getElementById('imp-ans-2').value, 10);
+            const a3 = parseInt(document.getElementById('imp-ans-3').value, 10);
+            const finalImp = parseInt(document.getElementById('imp-ans-final').value, 10);
+
+            const { ans1, ans2, ans3, correctImpostor } = currentImpostorPuzzle;
+
+            if (a1 === ans1 && a2 === ans2 && a3 === ans3 && finalImp === correctImpostor) {
+                confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+                currentUser.xp += 2; // Bonus XP voor Impostor Challenge
+                saveUserData();
+                updateUserUI();
+                
+                showToast('🕵️ GEWELDIG! Puzzel opgelost & Impostor ontmaskerd! +2 XP! 🔴', 'success');
+                questionCounter = 0;
+                nextQuestion();
+            } else {
+                showToast('❌ Niet alle antwoorden klopen nog! Kijk goed naar de Pokémon waarden en reken opnieuw.', 'error');
+            }
+        }
+
+        // --- TOAST MELDINGEN ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-900 border-slate-700 text-white';
+            if (type === 'success') bgClass = 'bg-emerald-600 border-emerald-400 text-white';
+            if (type === 'error') bgClass = 'bg-red-600 border-red-400 text-white';
+
+            toast.className = `toast-animate px-5 py-3 rounded-2xl border-2 font-bold text-sm shadow-xl flex items-center justify-center text-center ${bgClass}`;
+            toast.innerText = message;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
