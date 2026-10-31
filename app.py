@@ -70,7 +70,7 @@ st.markdown("""
         font-weight: normal !important;
     }
 
-    /* STYLING VOOR POP-UP MELDINGEN (TOASTS) */
+    /* POP-UP MELDINGEN (TOASTS) */
     div[data-testid="stToast"] {
         background-color: #1e293b !important;
         color: #ffffff !important;
@@ -120,27 +120,79 @@ def bereken_level_info(totale_xp):
         volgende_lvl = LEVELS[-1]
     return huidige_lvl, volgende_lvl
 
+# INCLUSIEF BREUKEN & GEEN KOMMAGETALLEN
 def genereer_gemengde_som(level):
-    keuze = random.choice(["maal", "deel", "plusmin"])
+    keuze = random.choice(["maal", "deel", "plusmin", "breuk"])
+    
     if keuze == "maal":
-        n1 = random.randint(6, 12) if level == 1 else random.randint(11, 15) if level == 2 else random.randint(12, 20)
-        n2 = random.randint(4, 12)
+        if level == 1:
+            n1, n2 = random.randint(2, 9), random.randint(2, 9)
+        elif level == 2:
+            n1, n2 = random.randint(3, 10), random.randint(3, 10)
+        else:
+            n1, n2 = random.randint(6, 12), random.randint(4, 10)
         return f"{n1} × {n2}", n1 * n2
+
     elif keuze == "plusmin":
         if level == 1:
-            n1, n2 = random.randint(25, 80), random.randint(15, 60)
+            n1, n2 = random.randint(15, 50), random.randint(10, 40)
             return f"{n1} + {n2}", n1 + n2
+        elif level == 2:
+            n1 = random.randint(40, 90)
+            n2 = random.randint(15, 35)
+            return f"{n1} - {n2}", n1 - n2
         else:
-            n1, n2, n3 = random.randint(40, 150), random.randint(20, 90), random.randint(10, 50)
-            return f"{n1} + {n2} - {n3}", n1 + n2 - n3
-    else:
-        ans, n2 = random.randint(6, 15), random.randint(4, 12)
+            n1, n2 = random.randint(50, 150), random.randint(25, 75)
+            return f"{n1} + {n2}", n1 + n2
+
+    elif keuze == "deel":
+        if level == 1:
+            ans, n2 = random.randint(2, 8), random.randint(2, 5)
+        elif level == 2:
+            ans, n2 = random.randint(3, 9), random.randint(2, 8)
+        else:
+            ans, n2 = random.randint(4, 10), random.randint(3, 9)
         return f"{ans * n2} ÷ {n2}", ans
 
+    else: # Breuken (altijd hele getallen als uitkomst)
+        opties = [
+            ("1/2", 2),
+            ("1/4", 4),
+            ("3/4", 4),
+            ("1/3", 3),
+            ("2/3", 3)
+        ]
+        breuk_tekst, noemer = random.choice(opties)
+        
+        # Zorg dat de vermenigvuldiging altijd mooi deelt zonder komma's
+        factor = random.randint(2, 8)
+        totaal_getal = noemer * factor
+        
+        if breuk_tekst == "1/2":
+            ans = totaal_getal // 2
+        elif breuk_tekst == "1/4":
+            ans = totaal_getal // 4
+        elif breuk_tekst == "3/4":
+            ans = (totaal_getal // 4) * 3
+        elif breuk_tekst == "1/3":
+            ans = totaal_getal // 3
+        elif breuk_tekst == "2/3":
+            ans = (totaal_getal // 3) * 2
+
+        return f"{breuk_tekst} van {totaal_getal}", ans
+
+# IMPOSTOR PUZZEL MET GEHELE GETALLEN
 def genereer_impostor_puzzel(level):
-    pika, chari, blast = random.randint(10, 25), random.randint(15, 30), random.randint(6, 15)
-    c1, c2, c3 = pika + chari, chari * blast, (chari + pika) - blast
-    return pika, chari, blast, c1, c2, c3, c2
+    pika = random.randint(4, 10)
+    chari = random.randint(5, 10)
+    blast = random.randint(2, 6)
+    
+    c1 = pika + chari
+    c2 = chari * blast
+    c3 = (chari + pika) - blast
+    
+    imp_juist = max(c1, c2, c3)
+    return pika, chari, blast, c1, c2, c3, imp_juist
 
 if "xp" not in st.session_state: st.session_state.xp = 0
 if "sommen_teller" not in st.session_state: st.session_state.sommen_teller = 0
@@ -229,7 +281,7 @@ else:
                     else: st.toast("❌ Niet alles klopt!", icon="💡")
                 except Exception: pass
 
-    # REGULIERE REKENVRAGEN WITH ST.CHAT_INPUT
+    # REGULIERE REKENVRAGEN
     else:
         st.write(f"**Ronde Voortgang: Vraag {st.session_state.sommen_teller + 1} van 10**")
         st.progress((st.session_state.sommen_teller + 1) / 10)
