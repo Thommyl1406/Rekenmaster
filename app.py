@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Outfit', sans-serif;
@@ -20,7 +22,6 @@
             color: #ffffff;
         }
 
-        /* Pokeball styling accenten */
         .pokeball-card {
             background-color: #ffffff !important;
             border: 4px solid #facc15;
@@ -54,7 +55,6 @@
             box-shadow: 0 2px 0px #7f1d1d;
         }
 
-        /* Toast animatie */
         @keyframes slideIn {
             from { transform: translateY(-100%); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -63,7 +63,6 @@
             animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -95,16 +94,16 @@
                 🎒 TRAINER TOEGANG
             </div>
             <h2 class="text-2xl font-black text-slate-900 mb-2">Welkom Trainer!</h2>
-            <p class="text-slate-600 font-medium mb-6 text-sm">Vul je Trainer Naam en een geheime 4-cijferige pincode in om je voortgang op te slaan.</p>
+            <p class="text-slate-600 font-medium mb-6 text-sm">Vul je Trainer Naam en een geheime 4-cijferige pincode in om je voortgang te bewaren.</p>
 
             <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
                 <div>
                     <label class="block text-left text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Trainer Naam</label>
-                    <input type="text" id="trainer-name" required placeholder="bijv. Ash Ketchum" class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-red-500 font-bold text-slate-800 text-lg shadow-sm">
+                    <input type="text" id="trainer-name" required placeholder="bijv. Ash Ketchum" autocomplete="off" class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-red-500 font-bold text-slate-800 text-lg shadow-sm">
                 </div>
                 <div>
                     <label class="block text-left text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">4-Cijferige Pincode</label>
-                    <input type="password" id="trainer-pin" maxlength="4" pattern="\d{4}" required placeholder="****" class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-red-500 font-bold text-slate-800 text-lg tracking-widest text-center shadow-sm">
+                    <input type="password" id="trainer-pin" maxlength="4" pattern="\d{4}" required placeholder="****" autocomplete="off" class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-red-500 font-bold text-slate-800 text-lg tracking-widest text-center shadow-sm">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-2">
@@ -184,7 +183,7 @@
             <!-- Invoer Formulier -->
             <form id="answer-form" onsubmit="submitAnswer(event)" class="space-y-3">
                 <div>
-                    <input type="number" id="answer-input" required autocomplete="off" placeholder="Typ je antwoord..." class="w-full text-center py-4 px-6 rounded-2xl bg-white text-slate-900 text-3xl font-black border-4 border-yellow-400 shadow-xl focus:outline-none focus:ring-4 focus:ring-red-500 transition">
+                    <input type="text" id="answer-input" pattern="-?\d*" inputmode="numeric" required autocomplete="off" placeholder="Typ je antwoord..." class="w-full text-center py-4 px-6 rounded-2xl bg-white text-slate-900 text-3xl font-black border-4 border-yellow-400 shadow-xl focus:outline-none focus:ring-4 focus:ring-red-500 transition">
                 </div>
                 <button type="submit" class="poke-btn w-full text-white font-black text-xl py-4 rounded-2xl flex items-center justify-center gap-3">
                     <i class="fa-solid fa-fire text-yellow-300"></i> BEVESTIG ANTWOORD [ENTER]
@@ -229,19 +228,19 @@
                 <div class="space-y-3">
                     <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                         <label id="lbl-imp-q1" class="block text-sm font-bold text-slate-800 mb-1">1) Pikachu + Charizard = ?</label>
-                        <input type="number" id="imp-ans-1" required placeholder="Antwoord 1" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
+                        <input type="text" id="imp-ans-1" pattern="-?\d*" inputmode="numeric" required autocomplete="off" placeholder="Antwoord 1" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
                     </div>
                     <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                         <label id="lbl-imp-q2" class="block text-sm font-bold text-slate-800 mb-1">2) Charizard × Blastoise = ?</label>
-                        <input type="number" id="imp-ans-2" required placeholder="Antwoord 2" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
+                        <input type="text" id="imp-ans-2" pattern="-?\d*" inputmode="numeric" required autocomplete="off" placeholder="Antwoord 2" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
                     </div>
                     <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                         <label id="lbl-imp-q3" class="block text-sm font-bold text-slate-800 mb-1">3) (Charizard + Pikachu) - Blastoise = ?</label>
-                        <input type="number" id="imp-ans-3" required placeholder="Antwoord 3" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
+                        <input type="text" id="imp-ans-3" pattern="-?\d*" inputmode="numeric" required autocomplete="off" placeholder="Antwoord 3" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:border-red-500">
                     </div>
                     <div class="bg-red-50 p-3 rounded-xl border-2 border-red-300">
                         <label class="block text-sm font-black text-red-700 mb-1">🚨 Wat is de GROOTSTE uitkomst (de Impostor)?</label>
-                        <input type="number" id="imp-ans-final" required placeholder="Vul de grootste uitkomst in..." class="w-full px-3 py-2 border-2 border-red-400 rounded-lg font-black text-red-900 focus:outline-none focus:border-red-600">
+                        <input type="text" id="imp-ans-final" pattern="-?\d*" inputmode="numeric" required autocomplete="off" placeholder="Vul de grootste uitkomst in..." class="w-full px-3 py-2 border-2 border-red-400 rounded-lg font-black text-red-900 focus:outline-none focus:border-red-600">
                     </div>
                 </div>
 
@@ -254,6 +253,11 @@
 
     <!-- JavaScript Logica -->
     <script>
+        // Supabase Database Koppeling
+        const SUPABASE_URL = "https://iwootoqaieisilkylotg.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_dAOMuXRA6lUMrPbieCpcVA_VMWQCSs-";
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
         // Officiële Pokémon API Sprites
         const POKEMON_SPRITES = {
             Pikachu: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
@@ -268,7 +272,7 @@
             { level: 1, name: "Pikachu Trainer", xpNeeded: 0, sprite: POKEMON_SPRITES.Pikachu },
             { level: 2, name: "Charmeleon Gym-Uitdager", xpNeeded: 50, sprite: POKEMON_SPRITES.Charmeleon },
             { level: 3, name: "Blastoise Reken-Master", xpNeeded: 120, sprite: POKEMON_SPRITES.Blastoise },
-            { level: 4, name: "Charizard Elite Four", xpNeeded: 250, sprite: POKEMON_SPRITES.Charizard },
+            { level: 4, name: "Dragonite Elite Four", xpNeeded: 250, sprite: POKEMON_SPRITES.Charizard },
             { level: 5, name: "Mewtwo Reken-Champion", xpNeeded: 500, sprite: POKEMON_SPRITES.Mewtwo }
         ];
 
@@ -277,7 +281,7 @@
         let authAction = 'login';
         let currentProblem = null;
         let currentImpostorPuzzle = null;
-        let questionCounter = 0; // 0 t/m 9, bij 10 -> Impostor challenge
+        let questionCounter = 0;
 
         // Initialisatie
         window.onload = () => {
@@ -293,8 +297,8 @@
             showAuthScreen();
         };
 
-        // --- AUTHENTICATIE MET LOCALSTORAGE ---
-        function handleAuth(e) {
+        // --- AUTHENTICATIE MET SUPABASE + FALLBACK LOCALSTORAGE ---
+        async function handleAuth(e) {
             e.preventDefault();
             const nameInput = document.getElementById('trainer-name').value.trim().toLowerCase();
             const pinInput = document.getElementById('trainer-pin').value.trim();
@@ -304,30 +308,54 @@
                 return;
             }
 
-            const storageKey = `poke_gym_user_${nameInput}`;
-            const existingUser = localStorage.getItem(storageKey);
-
             if (authAction === 'register') {
-                if (existingUser) {
-                    showToast('⚠️ Deze trainer bestaat al! Kies Inloggen.', 'error');
-                    return;
+                if (supabaseClient) {
+                    try {
+                        const { data: existing } = await supabaseClient.from('players').select('*').eq('naam', nameInput);
+                        if (existing && existing.length > 0) {
+                            showToast('⚠️ Deze trainer bestaat al! Kies Inloggen.', 'error');
+                            return;
+                        }
+                        await supabaseClient.from('players').insert([{ naam: nameInput, pincode: pinInput, xp: 0 }]);
+                    } catch (err) {
+                        console.warn('Supabase offline, local fallback used.', err);
+                    }
                 }
+                
                 currentUser = { name: nameInput, pin: pinInput, xp: 0 };
-                localStorage.setItem(storageKey, JSON.stringify(currentUser));
+                saveUserData();
                 localStorage.setItem('poke_gym_current_session', nameInput);
                 showToast('✨ Trainer account succesvol aangemaakt!', 'success');
                 loadGameScreen();
             } else {
-                if (!existingUser) {
+                let fetchedUser = null;
+                if (supabaseClient) {
+                    try {
+                        const { data } = await supabaseClient.from('players').select('*').eq('naam', nameInput);
+                        if (data && data.length > 0) {
+                            fetchedUser = { name: data[0].naam, pin: String(data[0].pincode), xp: data[0].xp || 0 };
+                        }
+                    } catch (err) {
+                        console.warn('Supabase check fallback.', err);
+                    }
+                }
+
+                if (!fetchedUser) {
+                    const localData = localStorage.getItem(`poke_gym_user_${nameInput}`);
+                    if (localData) fetchedUser = JSON.parse(localData);
+                }
+
+                if (!fetchedUser) {
                     showToast('❌ Trainer niet gevonden! Maak eerst een nieuw account aan.', 'error');
                     return;
                 }
-                const parsedUser = JSON.parse(existingUser);
-                if (parsedUser.pin !== pinInput) {
+                if (fetchedUser.pin !== pinInput) {
                     showToast('🔒 Onjuiste pincode voor deze trainer!', 'error');
                     return;
                 }
-                currentUser = parsedUser;
+
+                currentUser = fetchedUser;
+                saveUserData();
                 localStorage.setItem('poke_gym_current_session', nameInput);
                 showToast(`⚡ Welkom terug, ${currentUser.name.toUpperCase()}!`, 'success');
                 loadGameScreen();
@@ -357,9 +385,16 @@
             nextQuestion();
         }
 
-        function saveUserData() {
-            if (currentUser) {
-                localStorage.setItem(`poke_gym_user_${currentUser.name}`, JSON.stringify(currentUser));
+        async function saveUserData() {
+            if (!currentUser) return;
+            localStorage.setItem(`poke_gym_user_${currentUser.name}`, JSON.stringify(currentUser));
+
+            if (supabaseClient) {
+                try {
+                    await supabaseClient.from('players').update({ xp: currentUser.xp }).eq('naam', currentUser.name);
+                } catch (err) {
+                    console.warn('Supabase sync error', err);
+                }
             }
         }
 
@@ -424,7 +459,6 @@
                 num1 = answer * num2;
                 questionText = `${num1} ÷ ${num2}`;
             } else {
-                // Plus & Min met 3 getallen bij hogere levels
                 if (level === 1) {
                     num1 = rand(25, 80); num2 = rand(15, 60);
                     answer = num1 + num2;
@@ -467,7 +501,6 @@
             const inputField = document.getElementById('answer-input');
             inputField.value = '';
             
-            // GARANTIE VOOR CRITICAL FEATURE 5: Directe autofocus zonder re-render
             requestAnimationFrame(() => {
                 inputField.focus();
             });
@@ -476,7 +509,7 @@
         function submitAnswer(e) {
             e.preventDefault();
             const inputField = document.getElementById('answer-input');
-            const val = parseInt(inputField.value, 10);
+            const val = parseInt(inputField.value.trim(), 10);
 
             if (isNaN(val)) return;
 
@@ -512,12 +545,11 @@
             const blast = rand(6, 15);
 
             const ans1 = pika + chari;
-            const ans2 = chari * blast; // Dit is de vermenigvuldiging -> grootste -> Impostor
+            const ans2 = chari * blast;
             const ans3 = (chari + pika) - blast;
 
             currentImpostorPuzzle = { pika, chari, blast, ans1, ans2, ans3, correctImpostor: ans2 };
 
-            // Beelden en waarden instellen
             document.getElementById('imp-img-pika').src = POKEMON_SPRITES.Pikachu;
             document.getElementById('imp-img-chari').src = POKEMON_SPRITES.Charizard;
             document.getElementById('imp-img-blast').src = POKEMON_SPRITES.Blastoise;
@@ -539,16 +571,16 @@
 
         function submitImpostor(e) {
             e.preventDefault();
-            const a1 = parseInt(document.getElementById('imp-ans-1').value, 10);
-            const a2 = parseInt(document.getElementById('imp-ans-2').value, 10);
-            const a3 = parseInt(document.getElementById('imp-ans-3').value, 10);
-            const finalImp = parseInt(document.getElementById('imp-ans-final').value, 10);
+            const a1 = parseInt(document.getElementById('imp-ans-1').value.trim(), 10);
+            const a2 = parseInt(document.getElementById('imp-ans-2').value.trim(), 10);
+            const a3 = parseInt(document.getElementById('imp-ans-3').value.trim(), 10);
+            const finalImp = parseInt(document.getElementById('imp-ans-final').value.trim(), 10);
 
             const { ans1, ans2, ans3, correctImpostor } = currentImpostorPuzzle;
 
             if (a1 === ans1 && a2 === ans2 && a3 === ans3 && finalImp === correctImpostor) {
                 confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
-                currentUser.xp += 2; // Bonus XP voor Impostor Challenge
+                currentUser.xp += 2;
                 saveUserData();
                 updateUserUI();
                 
