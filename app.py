@@ -249,7 +249,7 @@ else:
         st.session_state.huidige_som = genereer_gemengde_som(huidige_lvl['level'])
 
     som_tekst, juist_ans = st.session_state.huidige_som
-    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allowed_html=True)
+    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)  # <-- Gecorrigeerd naar unsafe_allow_html
 
     ans_invoer = st.number_input("Typ je antwoord en val aan:", step=1, value=None, key=f"q_{st.session_state.xp}")
 
