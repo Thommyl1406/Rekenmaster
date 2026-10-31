@@ -13,7 +13,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="🗺️ Reken-Expeditie", page_icon="🗺️", layout="centered")
 
-# Custom CSS voor een kleurrijke avonturensfeer
+# Custom CSS voor een kleurrijke avonturensfeer (Aangepast naar unsafe_allow_html)
 st.markdown("""
     <style>
     .stApp {
@@ -41,7 +41,7 @@ st.markdown("""
         padding: 12px 20px !important;
     }
     </style>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # Sessie variabelen instellen
 if "positie" not in st.session_state:
@@ -92,13 +92,13 @@ cols = st.columns(len(KAART_STAPPEN))
 for idx, stap in enumerate(KAART_STAPPEN):
     with cols[idx]:
         if idx == st.session_state.positie:
-            st.markdown(f"<div style='text-align: center; font-size: 2.2rem; background: #22c55e; border-radius: 50%; padding: 10px; border: 3px solid #facc15;'>🏃‍➡️<br>{stap['icoon']}</div>", unsafe_allowed_html=True)
+            st.markdown(f"<div style='text-align: center; font-size: 2.2rem; background: #22c55e; border-radius: 50%; padding: 10px; border: 3px solid #facc15;'>🏃‍➡️<br>{stap['icoon']}</div>", unsafe_allow_html=True)
             st.caption(f"**{stap['naam']}**")
         elif idx < st.session_state.positie:
-            st.markdown(f"<div style='text-align: center; font-size: 1.8rem; opacity: 0.6;'>✅<br>{stap['icoon']}</div>", unsafe_allowed_html=True)
+            st.markdown(f"<div style='text-align: center; font-size: 1.8rem; opacity: 0.6;'>✅<br>{stap['icoon']}</div>", unsafe_allow_html=True)
             st.caption(stap['naam'])
         else:
-            st.markdown(f"<div style='text-align: center; font-size: 1.8rem; opacity: 0.3;'>🔒<br>{stap['icoon']}</div>", unsafe_allowed_html=True)
+            st.markdown(f"<div style='text-align: center; font-size: 1.8rem; opacity: 0.3;'>🔒<br>{stap['icoon']}</div>", unsafe_allow_html=True)
             st.caption(stap['naam'])
 
 st.divider()
@@ -136,7 +136,7 @@ elif st.session_state.positie < MAX_STAPPEN:
             st.session_state.huidige_som = (f"{n1} + {n2}", n1 + n2)
 
     som_tekst, juist_ans = st.session_state.huidige_som
-    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allowed_html=True)
+    st.markdown(f'<div class="som-card">{som_tekst} = ?</div>', unsafe_allow_html=True)
 
     ans_invoer = st.number_input("Typ je antwoord in:", step=1, value=None, key=f"p_{st.session_state.positie}")
 
