@@ -8,6 +8,7 @@ from supabase import create_client
 SUPABASE_URL = "https://iwootoqaieisilkylotg.supabase.co"
 SUPABASE_KEY = "sb_publishable_dAOMuXRA6lUMrPbieCpcVA_VMWQCSs-"
 
+# Initialiseer de database
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="🗺️ Reken-Expeditie", page_icon="🗺️", layout="centered")
@@ -18,27 +19,6 @@ st.markdown("""
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
         color: #ffffff;
-    }
-    .map-container {
-        background: rgba(255, 255, 255, 0.05);
-        border: 3px dashed #facc15;
-        border-radius: 20px;
-        padding: 20px;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .map-step {
-        display: inline-block;
-        font-size: 2rem;
-        padding: 10px;
-        margin: 5px;
-        border-radius: 12px;
-        background-color: #334155;
-    }
-    .active-step {
-        background-color: #22c55e !important;
-        border: 3px solid #facc15;
-        transform: scale(1.15);
     }
     .som-card {
         background: linear-gradient(90deg, #4338ca 0%, #3730a3 100%);
@@ -63,7 +43,7 @@ st.markdown("""
     </style>
 """, unsafe_allowed_html=True)
 
-# Sessie variabelen
+# Sessie variabelen instellen
 if "positie" not in st.session_state:
     st.session_state.positie = 0
 if "score" not in st.session_state:
@@ -84,15 +64,19 @@ KAART_STAPPEN = [
 ]
 MAX_STAPPEN = len(KAART_STAPPEN) - 1
 
-# Admin sidebar
+# ---------------- ADMIN SIDEBAR ----------------
 st.sidebar.title("👑 Admin Login")
+
 if not st.session_state.is_admin:
-    u = st.sidebar.text_input("User", key="au")
-    p = st.sidebar.text_input("Pass", type="password", key="ap")
+    u = st.sidebar.text_input("Gebruikersnaam", key="au")
+    p = st.sidebar.text_input("Wachtwoord", type="password", key="ap")
     if st.sidebar.button("Inloggen"):
         if u == "admin" and p == "admin123":
             st.session_state.is_admin = True
+            st.sidebar.success("Ingelogd!")
             st.rerun()
+        else:
+            st.sidebar.error("Onjuiste gegevens!")
 else:
     st.sidebar.success("Ingelogd als Admin")
     if st.sidebar.button("Uitloggen"):
@@ -135,7 +119,7 @@ if st.session_state.positie == 0 and "speler_naam" not in st.session_state:
 elif st.session_state.positie < MAX_STAPPEN:
     huidige_halte = KAART_STAPPEN[st.session_state.positie]
     st.subheader(f"📍 Huidige locatie: {huidige_halte['icoon']} {huidige_halte['naam']}")
-    st.write(f"Los de som goed op om 1 stap vooruit te springen op de kaart!")
+    st.write("Los de som goed op om 1 stap vooruit te springen op de kaart!")
 
     # Som genereren
     if st.session_state.huidige_som is None:
@@ -163,7 +147,7 @@ elif st.session_state.positie < MAX_STAPPEN:
                 st.session_state.score += 10
                 st.toast("🎉 Goed zo! Je springt 1 stap vooruit op de kaart!", icon="🗺️")
             else:
-                st.toast(f"❌ Oeps! Het juiste antwoord was {juist_ans}. Probeer de volgende som!", icon="🧟")
+                st.toast(f"❌ Oeps! Het juiste antwoord was {juist_ans}.", icon="💡")
 
             st.session_state.huidige_som = None
             st.rerun()
@@ -173,7 +157,7 @@ else:
     st.balloons()
     st.snow()
     st.markdown(f"## 🏆 GEFELICITEERD, {st.session_state.speler_naam.upper()}! 🏆")
-    st.markdown("### Je hebt de Schatkist bereikt en de expedition voltooid! 💎✨")
+    st.markdown("### Je hebt de Schatkist bereikt en de expeditie voltooid! 💎✨")
 
     # Cloud opslag
     if "opgeslagen" not in st.session_state:
@@ -186,3 +170,26 @@ else:
             }).execute()
             st.session_state.opgeslagen = True
             st.success("Je behaalde schat staat opgeslagen op de muur! ☁️")
+        except Exception as e:
+            st.warning("Score kon niet worden opgeslagen in de database.")
+
+    if st.button("🔄 NOG EEN EXPEDITIE STARTEN!", use_container_width=True):
+        st.session_state.clear()
+        st.rerun()
+
+# ---------------- ADMIN DASHBOARD ----------------
+if st.session_state.is_admin:
+    st.divider()
+    st.subheader("📊 Admin Dashboard (Live Scores)")
+    try:
+        res = supabase.table("scores").select("id, created_at, naam, score, totaal, modus").order("id", desc=True).execute()
+        if res.data:
+            st.dataframe(res.data, use_container_width=True)
+            if st.button("🗑️ Wis Alle Scores uit Cloud"):
+                supabase.table("scores").delete().neq("id", 0).execute()
+                st.success("Alle scores gewist!")
+                st.rerun()
+        else:
+            st.info("Nog geen scores in de database.")
+    except Exception as e:
+        st.error(f"Fout bij het ophalen van gegevens: {e}")
