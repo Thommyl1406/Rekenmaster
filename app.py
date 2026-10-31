@@ -12,7 +12,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="🔴 Pokémon Reken-Gym Pro", page_icon="🔴", layout="centered")
 
-# Custom CSS voor perfecte leesbaarheid van het invoerveld
+# Custom CSS: Forceert ZWARTE tekst op WITTE achtergrond in álle invoervelden
 st.markdown("""
     <style>
     .stApp { 
@@ -42,17 +42,23 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* EXTRA STRAKKE EN LEESBARE STYLING VOOR HET INVOERVELD */
-    div[data-testid="stChatInput"] input {
+    /* ABSOLUTE FORCEER-STYLING VOOR CHAT INPUT EN TEKSTVAKKEN */
+    div[data-testid="stChatInput"] textarea,
+    div[data-testid="stChatInput"] input,
+    .stTextInput input {
         background-color: #ffffff !important;
         color: #000000 !important;
-        font-size: 1.6rem !important;
-        font-weight: bold !important;
+        -webkit-text-fill-color: #000000 !important;
+        font-size: 1.8rem !important;
+        font-weight: 900 !important;
         border: 3px solid #facc15 !important;
         border-radius: 14px !important;
     }
-    div[data-testid="stChatInput"] input::placeholder {
-        color: #64748b !important;
+
+    div[data-testid="stChatInput"] textarea::placeholder,
+    .stTextInput input::placeholder {
+        color: #475569 !important;
+        -webkit-text-fill-color: #475569 !important;
         font-size: 1.2rem !important;
         font-weight: normal !important;
     }
